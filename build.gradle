@@ -1,0 +1,143 @@
+apply plugin: 'java'
+apply plugin: 'license'
+
+sourceCompatibility = 1.8
+group = "org.tools4j"
+version = '1.7-SNAPSHOT'
+archivesBaseName = "tools4j-time"
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'tools4j-time', 'Implementation-Version': version
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+buildscript {
+	repositories {
+		mavenCentral()
+		jcenter()
+	}
+	
+	dependencies {
+		classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0'
+        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.5.3"
+	}
+}
+
+dependencies {
+    compile 'junit:junit:4.12'
+}
+
+uploadArchives {
+    repositories {
+       flatDir {
+           dirs 'build/repositories'
+       }
+    }
+}
+
+license {
+    header rootProject.file('src/main/templates/LICENSE.template')
+    strictCheck true
+    sourceSets {
+        main {
+            java { include "**/*.java" }
+            resources { include "LICENSE.txt" }
+        }
+    }
+	ext.year = Calendar.getInstance().get(Calendar.YEAR)
+}
+
+compileJava.dependsOn licenseFormat
+
+javadoc {
+	options.showFromPackage()
+	options.linkSource()
+	options.links("http://docs.oracle.com/javase/8/docs/api/");
+	options.docTitle = "tools4j-time API ${version}"
+	options.windowTitle = "tools4j-time API ${version}"
+	options.overview = "src/main/java/overview.html";
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+//snapshot first, then release:
+//gradle clean uploadArchives -Pupload -PossrhUsername=xxx -PossrhPassword=xxx
+if (project.hasProperty('upload')) {
+
+    allprojects {
+        apply plugin: 'signing'
+        apply plugin: 'maven'
+        apply plugin: 'io.codearte.nexus-staging'
+
+        // Signature of artifacts
+        signing {
+            sign configurations.archives
+        }
+
+        // OSSRH publication
+        uploadArchives {
+            repositories {
+                mavenDeployer {
+                    beforeDeployment {
+                        MavenDeployment deployment -> signing.signPom(deployment)
+                    }
+                    repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                        authentication(userName: ossrhUsername, password: ossrhPassword)
+                    }
+                    snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                        authentication(userName: ossrhUsername, password: ossrhPassword)
+                    }
+
+                    pom.project {
+                        name 'time'
+                        packaging 'jar'
+                        // optionally artifactId can be defined here
+                        description 'Java JUnit runner for parameterized tests where the test cases are defined in a table-like manner.'
+                        url 'http://time.tools4j.org'
+
+                        scm {
+                            connection 'scm:git:https://github.com/tools4j/time.git'
+                            developerConnection 'scm:git:https://github.com/tools4j/time.git'
+                            url 'https://github.com/tools4j/time.git'
+                        }
+                        licenses {
+                            license {
+                                name 'MIT License'
+                                url 'http://opensource.org/licenses/MIT'
+                            }
+                        }
+
+                        developers {
+                            developer {
+                                id 'terzerm'
+                                name 'Marco Terzer'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        nexusStaging {
+            username = ossrhUsername
+            password = ossrhPassword
+        }
+    }
+}
