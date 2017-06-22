@@ -29,6 +29,7 @@ import org.tools4j.spockito.Spockito;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -44,8 +45,22 @@ public class DatePackerTest {
     @Spockito.Unroll({
             "|  localDate |",
             "| 2017-01-01 |",
+            "| 2017-01-31 |",
+            "| 2017-02-28 |",
+            "| 2017-03-31 |",
+            "| 2017-04-30 |",
+            "| 2017-05-31 |",
+            "| 2017-06-30 |",
+            "| 2017-07-31 |",
+            "| 2017-08-31 |",
+            "| 2017-09-30 |",
+            "| 2017-10-31 |",
+            "| 2017-11-30 |",
             "| 2017-12-31 |",
-            "| 0001-01-01 |",
+            "| 2017-12-31 |",
+            "| 2016-02-29 |",
+            "| 2000-02-29 |",
+            "| 1900-02-28 |",
             "| 1970-01-01 |",
             "| 1970-01-02 |",
             "| 1969-12-31 |",
@@ -56,8 +71,26 @@ public class DatePackerTest {
             "| 0004-02-29 |",
             "| 0100-02-28 |",
             "| 0400-02-29 |",
+            "| 0001-01-01 |",
+            "| 9999-12-31 |",
     })
-    public static class Unroll {
+    public static class Valid {
+
+        private static final DateTimeFormatter YYYYMMDD = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        @Test
+        public void packDecimal(final LocalDate localDate) throws Exception {
+            final int packed = DatePacker.DECIMAL.pack(localDate);
+            assertEquals(Integer.parseInt(localDate.format(YYYYMMDD)), packed);
+        }
+
+        @Test
+        public void packBinary(final LocalDate localDate) throws Exception {
+            final int packed = DatePacker.BINARY.pack(localDate);
+            assertEquals((localDate.getYear() << 9) | (localDate.getMonthValue() << 5) | localDate.getDayOfMonth(),
+                    packed);
+        }
+
         @Test
         public void packAndUnpackLocalDate(final LocalDate localDate) throws Exception {
             for (final DatePacker packer : PACKERS) {
@@ -99,23 +132,74 @@ public class DatePackerTest {
         }
     }
 
-    @Test
-    public void packAndUnpackNull() throws Exception {
-        for (final DatePacker packer : PACKERS) {
+    @RunWith(Spockito.class)
+    @Spockito.Unroll({
+            "|  year | month | day |",
+            "|     0 |    1  |   1 |",
+            "|    -1 |    1  |   1 |",
+            "| 10000 |    1  |   1 |",
+            "|  2017 |    0  |   1 |",
+            "|  2017 |   -1  |   1 |",
+            "|  2017 |   13  |   1 |",
+            "|  2017 |    1  |   0 |",
+            "|  2017 |    1  |  -1 |",
+            "|  2017 |    1  |  32 |",
+            "|  2017 |    2  |  29 |",
+            "|  2016 |    2  |  30 |",
+            "|  2000 |    2  |  30 |",
+            "|  1900 |    2  |  29 |",
+            "|  1900 |    4  |  31 |",
+            "|  1900 |    6  |  31 |",
+            "|  1900 |    9  |  31 |",
+            "|  1900 |   11  |  31 |",
+    })
+    @Spockito.Name("[{row}]: {year}/{month}/{day}")
+    public static class Invalid {
+        @Test(expected = IllegalArgumentException.class)
+        public void packIllegalYearMonthDayBinary(final int year, final int month, final int day) {
+            DatePacker.BINARY.pack(year, month, day);
+        }
+
+        @Test(expected = IllegalArgumentException.class)
+        public void packIllegalYearMonthDayDecimal(final int year, final int month, final int day) {
+            DatePacker.DECIMAL.pack(year, month, day);
+        }
+
+        @Test(expected = IllegalArgumentException.class)
+        public void unpackIllegalYearMonthDayBinary(final int year, final int month, final int day) {
+            final int packed = (year << 9) | (month << 5) | day;
+            DatePacker.BINARY.unpackDay(packed);
+        }
+
+        @Test(expected = IllegalArgumentException.class)
+        public void unpackIllegalYearMonthDayDecimal(final int year, final int month, final int day) {
+            final int packed = year * 10000 + month * 100 + day;
+            DatePacker.DECIMAL.unpackDay(packed);
+        }
+    }
+
+    @RunWith(Spockito.class)
+    @Spockito.Unroll({
+            "| packing |",
+            "|  BINARY |",
+            "| DECIMAL |",
+    })
+    @Spockito.UseValueConverter
+    public static class Special {
+        @Test
+        public void packAndUnpackNull(final Packing packing) throws Exception {
+            final DatePacker packer = DatePacker.forPacking(packing);
             final int packed = packer.packNull();
             final boolean isNull = packer.unpackNull(packed);
             assertEquals(packer + ": pack null", 0, packed);
             assertTrue(packer + ": unpack null", isNull);
         }
-    }
 
-    @Test
-    public void packing() throws Exception {
-        assertEquals(Packing.BINARY, DatePacker.BINARY.packing());
-        assertEquals(Packing.DECIMAL, DatePacker.DECIMAL.packing());
-        for (final Packing packing : Packing.values()) {
+        @Test
+        public void packing(final Packing packing) throws Exception {
             final DatePacker packer = DatePacker.forPacking(packing);
             assertEquals(packing, packer.packing());
+            assertEquals(packer, DatePacker.class.getField(packing.name()).get(null));
             assertEquals(DatePacker.class.getSimpleName() + "." + packing, packer.toString());
         }
     }

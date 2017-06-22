@@ -96,12 +96,12 @@ public interface DatePacker {
         @Override
         public int pack(final int year, final int month, final int day) {
             checkValidDate(year, month, day);
-            return (year * 1000000) + (month * 100) + day;
+            return (year * 10000) + (month * 100) + day;
         }
 
         @Override
         public int unpackYear(final int packed) {
-            return checkValidYear(packed / 1000000);
+            return checkValidYear(packed / 10000);
         }
 
         @Override
@@ -112,8 +112,8 @@ public interface DatePacker {
         @Override
         public int unpackDay(final int packed) {
             int p = packed;
-            final int y = p / 1000000;
-            p -= y * 1000000;
+            final int y = p / 10000;
+            p -= y * 10000;
             final int m = p / 100;
             final int d = p - m * 100;
             return checkValidDate(y, m, d);
