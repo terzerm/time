@@ -25,11 +25,14 @@ package org.tools4j.time;
 
 import java.time.LocalDate;
 
+import static org.tools4j.time.DateValidator.*;
+
 public interface DatePacker {
     int pack(int year, int month, int day);
     int unpackYear(int packed);
     int unpackMonth(int packed);
     int unpackDay(int packed);
+    Packing packing();
 
     default int packNull() {
         return 0;
@@ -59,44 +62,71 @@ public interface DatePacker {
     DatePacker BINARY = new DatePacker() {
         @Override
         public int pack(final int year, final int month, final int day) {
-            return ((year & 0x3ff) << 9) | ((month & 0xf) << 5) | (day & 0x1f);
+            checkValidDate(year, month, day);
+            return (year << 9) | (month << 5) | day;
         }
 
         @Override
         public int unpackYear(final int packed) {
-            return (packed >>> 9) & 0x3ff;
+            return checkValidYear(packed >>> 9);
         }
 
         @Override
         public int unpackMonth(final int packed) {
-            return (packed >>> 5) & 0xf;
+            return checkValidMonth((packed >>> 5) & 0xf);
         }
 
         @Override
         public int unpackDay(final int packed) {
-            return packed & 0x1f;
+            return checkValidDate(packed >>> 9, (packed >>> 5) & 0xf, packed & 0x1f);
+        }
+
+        @Override
+        public Packing packing() {
+            return Packing.BINARY;
+        }
+
+        @Override
+        public String toString() {
+            return "DatePacker.BINARY";
         }
     };
 
     DatePacker DECIMAL = new DatePacker() {
         @Override
         public int pack(final int year, final int month, final int day) {
-            return ((year % 10000) * 1000000) + ((month % 100) * 100) + (day % 100);
+            checkValidDate(year, month, day);
+            return (year * 1000000) + (month * 100) + day;
         }
 
         @Override
         public int unpackYear(final int packed) {
-            return (packed / 1000000) % 1000;
+            return checkValidYear(packed / 1000000);
         }
 
         @Override
         public int unpackMonth(final int packed) {
-            return (packed / 100) % 100;
+            return checkValidMonth((packed / 100) % 100);
         }
 
         @Override
         public int unpackDay(final int packed) {
-            return packed % 100;
+            int p = packed;
+            final int y = p / 1000000;
+            p -= y * 1000000;
+            final int m = p / 100;
+            final int d = p - m * 100;
+            return checkValidDate(y, m, d);
+        }
+
+        @Override
+        public Packing packing() {
+            return Packing.DECIMAL;
+        }
+
+        @Override
+        public String toString() {
+            return "DatePacker.DECIMAL";
         }
     };
 }

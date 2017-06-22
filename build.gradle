@@ -30,6 +30,7 @@ buildscript {
 
 dependencies {
     compile 'junit:junit:4.12'
+    testCompile 'org.tools4j:tools4j-spockito:1.6'
 }
 
 uploadArchives {

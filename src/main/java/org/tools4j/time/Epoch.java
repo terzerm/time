@@ -25,9 +25,10 @@ package org.tools4j.time;
 
 import java.time.chrono.IsoChronology;
 
+import static java.lang.Math.floorDiv;
+import static java.lang.Math.floorMod;
 import static java.time.temporal.ChronoField.YEAR;
-import static org.tools4j.time.TimeFactors.MILLIS_PER_DAY;
-import static org.tools4j.time.TimeFactors.SECONDS_PER_DAY;
+import static org.tools4j.time.TimeFactors.*;
 
 /**
  * Converts dates to days since epoch and vice versa.
@@ -47,7 +48,7 @@ public final class Epoch {
 
     public static long toEpochDays(final int year, final int month, final int day) {
         //see LocalDate.toEpochDay
-        long y = year;
+        long y = YEAR.checkValidIntValue(year);
         long m = month;
         long total = 0;
         total += 365 * y;
@@ -67,14 +68,6 @@ public final class Epoch {
         return total - DAYS_0000_TO_1970;
     }
 
-    public static long toEpochSeconds(final int year, final int month, final int day) {
-        return toEpochDays(year, month, day) * SECONDS_PER_DAY;
-    }
-
-    public static long toEpochMillis(final int year, final int month, final int day) {
-        return toEpochDays(year, month, day) * MILLIS_PER_DAY;
-    }
-
     public static long toEpochDays(final int packedDate, final DatePacker datePacker) {
         return toEpochDays(
                 datePacker.unpackYear(packedDate),
@@ -83,12 +76,85 @@ public final class Epoch {
         );
     }
 
+    public static long toEpochSeconds(final int year, final int month, final int day) {
+        return toEpochDays(year, month, day) * SECONDS_PER_DAY;
+    }
+
+    public static long toEpochSeconds(final int year, final int month, final int day,
+                                      final int hour, final int minute) {
+        return toEpochSeconds(year, month, day, hour, minute, 0);
+    }
+
+    public static long toEpochSeconds(final int year, final int month, final int day,
+                                      final int hour, final int minute, final int second) {
+        return toEpochSeconds(year, month, day)
+                + hour * SECONDS_PER_HOUR + minute * SECONDS_PER_MINUTE + second;
+    }
+
     public static long toEpochSeconds(final int packedDate, final DatePacker datePacker) {
         return toEpochDays(packedDate, datePacker) * SECONDS_PER_DAY;
     }
 
+    public static long toEpochSeconds(final int packedDate, final DatePacker datePacker,
+                                      final int packedTime, final TimePacker timePacker) {
+        return toEpochSeconds(
+                datePacker.unpackYear(packedDate),
+                datePacker.unpackMonth(packedDate),
+                datePacker.unpackDay(packedDate),
+                timePacker.unpackHour(packedTime),
+                timePacker.unpackMinute(packedTime),
+                timePacker.unpackSecond(packedTime)
+        );
+    }
+
+    public static long toEpochMillis(final int year, final int month, final int day) {
+        return toEpochDays(year, month, day) * MILLIS_PER_DAY;
+    }
+
+    public static long toEpochMillis(final int year, final int month, final int day,
+                                     final int hour, final int minute, final int second, final int milli) {
+        return toEpochMillis(year, month, day)
+                + hour * MILLIS_PER_HOUR + minute * MILLIS_PER_MINUTE + second * MILLIS_PER_SECOND + milli;
+    }
+
     public static long toEpochMillis(final int packedDate, final DatePacker datePacker) {
         return toEpochDays(packedDate, datePacker) * MILLIS_PER_DAY;
+    }
+
+    public static long toEpochMillis(final int packedDate, final DatePacker datePacker,
+                                     final int packedMilliTime, final MilliTimePacker milliTimePacker) {
+        return toEpochMillis(
+                datePacker.unpackYear(packedDate),
+                datePacker.unpackMonth(packedDate),
+                datePacker.unpackDay(packedDate),
+                milliTimePacker.unpackHour(packedMilliTime),
+                milliTimePacker.unpackMinute(packedMilliTime),
+                milliTimePacker.unpackSecond(packedMilliTime),
+                milliTimePacker.unpackMilli(packedMilliTime)
+        );
+    }
+
+    public static long toEpochNanos(final int year, final int month, final int day) {
+        return toEpochDays(year, month, day) * NANOS_PER_DAY;
+    }
+
+    public static long toEpochNanos(final int year, final int month, final int day,
+                                    final int hour, final int minute, final int second, final int nano) {
+        return toEpochNanos(year, month, day)
+                + hour * NANOS_PER_HOUR + minute * NANOS_PER_MINUTE + second * NANOS_PER_SECOND + nano;
+    }
+
+    public static long toEpochNanos(final int packedDate, final DatePacker datePacker,
+                                    final long packedNanoTime, final NanoTimePacker nanoTimePacker) {
+        return toEpochNanos(
+                datePacker.unpackYear(packedDate),
+                datePacker.unpackMonth(packedDate),
+                datePacker.unpackDay(packedDate),
+                nanoTimePacker.unpackHour(packedNanoTime),
+                nanoTimePacker.unpackMinute(packedNanoTime),
+                nanoTimePacker.unpackSecond(packedNanoTime),
+                nanoTimePacker.unpackNano(packedNanoTime)
+        );
     }
 
     public static int fromEpochDays(final long daysSinceEpoch, final DatePacker datePacker) {
@@ -120,16 +186,83 @@ public final class Epoch {
         yearEst += marchMonth0 / 10;
 
         // check year now we are certain it is correct
-        final int year = YEAR.checkValidIntValue(yearEst);
+        final int year = DateValidator.checkValidYear(yearEst);
         return datePacker.pack(year, month, day);
     }
 
     public static int fromEpochSeconds(final long secondsSinceEpoch, final DatePacker datePacker) {
-        return fromEpochDays(secondsSinceEpoch / SECONDS_PER_DAY, datePacker);
+        return fromEpochDays(Math.floorDiv(secondsSinceEpoch, SECONDS_PER_DAY), datePacker);
+    }
+
+    public static int fromEpochSeconds(final long secondsSinceEpoch, final TimePacker timePacker) {
+        final int timeInSeconds = (int)floorMod(secondsSinceEpoch, SECONDS_PER_DAY);
+        return timePacker.pack(
+                divMod(timeInSeconds, SECONDS_PER_HOUR, 24),
+                divMod(timeInSeconds, SECONDS_PER_MINUTE, 60),
+                floorMod(timeInSeconds, 60)
+        );
+    }
+
+    public static long fromEpochSeconds(final long secondsSinceEpoch, final MilliTimePacker milliTimePacker) {
+        final int timeInSeconds = (int)floorMod(secondsSinceEpoch, SECONDS_PER_DAY);
+        return milliTimePacker.pack(
+                divMod(timeInSeconds, SECONDS_PER_HOUR, 24),
+                divMod(timeInSeconds, SECONDS_PER_MINUTE, 60),
+                floorMod(timeInSeconds, 60),
+                0
+        );
+    }
+
+    public static long fromEpochSeconds(final long secondsSinceEpoch, final NanoTimePacker nanoTimePacker) {
+        final int timeInSeconds = (int)floorMod(secondsSinceEpoch, SECONDS_PER_DAY);
+        return nanoTimePacker.pack(
+                divMod(timeInSeconds, SECONDS_PER_HOUR, 24),
+                divMod(timeInSeconds, SECONDS_PER_MINUTE, 60),
+                floorMod(timeInSeconds, 60),
+                0
+        );
     }
 
     public static int fromEpochMillis(final long millisSinceEpoch, final DatePacker datePacker) {
-        return fromEpochDays(millisSinceEpoch / MILLIS_PER_DAY, datePacker);
+        return fromEpochDays(floorDiv(millisSinceEpoch, MILLIS_PER_DAY), datePacker);
+    }
+
+    public static int fromEpochMillis(final long millisSinceEpoch, final MilliTimePacker milliTimePacker) {
+        final int timeInMillis = (int)floorMod(millisSinceEpoch, MILLIS_PER_DAY);
+        return milliTimePacker.pack(
+                divMod(timeInMillis, MILLIS_PER_HOUR, 24),
+                divMod(timeInMillis, MILLIS_PER_MINUTE, 60),
+                divMod(timeInMillis, MILLIS_PER_SECOND, 60),
+                floorMod(timeInMillis, 1000)
+        );
+    }
+
+    public static long fromEpochMillis(final long millisSinceEpoch, final NanoTimePacker nanoTimePacker) {
+        final int timeInMillis = (int)floorMod(millisSinceEpoch, MILLIS_PER_DAY);
+        return nanoTimePacker.pack(
+                divMod(timeInMillis, MILLIS_PER_HOUR, 24),
+                divMod(timeInMillis, MILLIS_PER_MINUTE, 60),
+                divMod(timeInMillis, MILLIS_PER_SECOND, 60),
+                floorMod(timeInMillis, 1000) * NANOS_PER_MILLI
+        );
+    }
+
+    public static long fromEpochNanos(final long nanosSinceEpoch, final NanoTimePacker nanoTimePacker) {
+        final int timeInSeconds = divMod(nanosSinceEpoch, NANOS_PER_SECOND, SECONDS_PER_DAY);
+        return nanoTimePacker.pack(
+                divMod(timeInSeconds, SECONDS_PER_HOUR, 24),
+                divMod(timeInSeconds, SECONDS_PER_MINUTE, 60),
+                floorMod(timeInSeconds, 60),
+                (int)floorMod(nanosSinceEpoch, NANOS_PER_SECOND)
+        );
+    }
+
+    private static int divMod(final int value, final int divisor, final int moduloDivisor) {
+        return floorMod(Math.floorDiv(value, divisor), moduloDivisor);
+    }
+
+    private static int divMod(final long value, final long divisor, final int moduloDivisor) {
+        return (int) floorMod(Math.floorDiv(value, divisor), moduloDivisor);
     }
 
     private Epoch() {

@@ -23,6 +23,8 @@
  */
 package org.tools4j.time;
 
+import java.util.function.Consumer;
+
 /**
  * Defines different methods to pack multiple values into an integer value.
  */
@@ -40,4 +42,20 @@ public enum Packing {
      * th date 30st April 1979 as 19790430.
      */
     DECIMAL;
+
+    private static Packing[] VALUES = values();
+
+    public static final int length() {
+        return VALUES.length;
+    }
+
+    public static final Packing valueByOrdinal(final int ordinal) {
+        return VALUES[ordinal];
+    }
+
+    public static final void forEach(final Consumer<? super Packing> consumer) {
+        for (final Packing packing : VALUES) {
+            consumer.accept(packing);
+        }
+    }
 }

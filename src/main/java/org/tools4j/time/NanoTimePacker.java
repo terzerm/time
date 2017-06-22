@@ -25,7 +25,8 @@ package org.tools4j.time;
 
 import java.time.LocalTime;
 
-import static org.tools4j.time.TimeFactors.*;
+import static org.tools4j.time.TimeFactors.NANOS_PER_SECOND;
+import static org.tools4j.time.TimeValidator.*;
 
 public interface NanoTimePacker {
     long pack(int hour, int minute, int second, int nano);
@@ -33,6 +34,7 @@ public interface NanoTimePacker {
     int unpackMinute(long packed);
     int unpackSecond(long packed);
     int unpackNano(long packed);
+    Packing packing();
 
     default long packNull() {
         return -1L;
@@ -50,23 +52,11 @@ public interface NanoTimePacker {
     }
 
     default long packMillisSinceEpoch(final long millisSinceEpoch) {
-        final long timeInMillis = millisSinceEpoch % MILLIS_PER_DAY;
-        return pack(
-                (int)((timeInMillis / MILLIS_PER_HOUR) % 24),
-                (int)((timeInMillis / MILLIS_PER_MINUTE) % 60),
-                (int)((timeInMillis / MILLIS_PER_SECOND) % 60),
-                (int)((timeInMillis % 1000) * NANOS_PER_MILLI)
-        );
+        return Epoch.fromEpochMillis(millisSinceEpoch, this);
     }
 
     default long packNanosSinceEpoch(final long nanosSinceEpoch) {
-        final long timeInNanos = nanosSinceEpoch % NANOS_PER_DAY;
-        return pack(
-                (int)((timeInNanos / NANOS_PER_HOUR) % 24),
-                (int)((timeInNanos / NANOS_PER_MINUTE) % 60),
-                (int)((timeInNanos / NANOS_PER_SECOND) % 60),
-                (int)(timeInNanos % NANOS_PER_SECOND)
-        );
+        return Epoch.fromEpochNanos(nanosSinceEpoch, this);
     }
 
     static NanoTimePacker forPacking(final Packing packing) {
@@ -76,56 +66,77 @@ public interface NanoTimePacker {
     NanoTimePacker BINARY = new NanoTimePacker() {
         @Override
         public long pack(final int hour, final int minute, final int second, final int nano) {
+            checkValidTimeWithNanos(hour, minute, second, nano);
             return ((hour & 0x3fL) << 42) | ((minute & 0x3fL) << 36) | ((second & 0x3fL) << 30) | (nano & 0x3fffffffL);
         }
 
         @Override
         public int unpackHour(final long packed) {
-            return (int)((packed >>> 42) & 0x3f);
+            return checkValidHour((int)(packed >>> 42));
         }
 
         @Override
         public int unpackMinute(final long packed) {
-            return (int)((packed >>> 36) & 0x3f);
+            return checkValidMinute((int)((packed >>> 36) & 0x3f));
         }
 
         @Override
         public int unpackSecond(final long packed) {
-            return (int)((packed >>> 30) & 0x3f);
+            return checkValidSecond((int)((packed >>> 30) & 0x3f));
         }
 
         @Override
         public int unpackNano(final long packed) {
-            return (int)(packed & 0x3fffffff);
+            return checkValidNano((int)(packed & 0x3fffffff));
         }
 
+        @Override
+        public Packing packing() {
+            return Packing.BINARY;
+        }
+
+        @Override
+        public String toString() {
+            return "NanoTimePacker.BINARY";
+        }
     };
 
     NanoTimePacker DECIMAL = new NanoTimePacker() {
         @Override
         public long pack(final int hour, final int minute, final int second, final int nano) {
-            return ((hour % 60) * 10000 * NANOS_PER_SECOND) + ((minute % 60) * 100 * NANOS_PER_SECOND) +
-                    ((second % 60) * NANOS_PER_SECOND) + (nano % NANOS_PER_SECOND);
+            checkValidTimeWithNanos(hour, minute, second, nano);
+            return hour * 10000 * NANOS_PER_SECOND + minute * 100 * NANOS_PER_SECOND +
+                    second * NANOS_PER_SECOND + nano;
         }
 
         @Override
         public int unpackHour(final long packed) {
-            return (int)((packed / (10000 * NANOS_PER_SECOND)) % 60);
+            return checkValidHour((int)(packed / (10000 * NANOS_PER_SECOND)));
         }
 
         @Override
         public int unpackMinute(final long packed) {
-            return (int)((packed / (100 * NANOS_PER_SECOND)) % 60);
+            return checkValidMinute((int)((packed / (100 * NANOS_PER_SECOND)) % 60));
         }
 
         @Override
         public int unpackSecond(final long packed) {
-            return (int)((packed / NANOS_PER_SECOND) % 60);
+            return checkValidSecond((int)((packed / NANOS_PER_SECOND) % 60));
         }
 
         @Override
         public int unpackNano(final long packed) {
-            return (int)(packed % NANOS_PER_SECOND);
+            return checkValidNano((int)(packed % NANOS_PER_SECOND));
+        }
+
+        @Override
+        public Packing packing() {
+            return Packing.DECIMAL;
+        }
+
+        @Override
+        public String toString() {
+            return "NanoTimePacker.DECIMAL";
         }
     };
 }

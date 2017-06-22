@@ -25,14 +25,15 @@ package org.tools4j.time;
 
 import java.time.LocalTime;
 
-import static org.tools4j.time.TimeFactors.MILLIS_PER_SECOND;
+import static org.tools4j.time.TimeFactors.NANOS_PER_MILLI;
 import static org.tools4j.time.TimeValidator.*;
 
-public interface TimePacker {
-    int pack(int hour, int minute, int second);
+public interface MilliTimePacker {
+    int pack(int hour, int minute, int second, int milli);
     int unpackHour(int packed);
     int unpackMinute(int packed);
     int unpackSecond(int packed);
+    int unpackMilli(int packed);
     Packing packing();
 
     default int packNull() {
@@ -44,45 +45,46 @@ public interface TimePacker {
     }
 
     default int pack(final LocalTime localTime) {
-        return pack(localTime.getHour(), localTime.getMinute(), localTime.getSecond());
+        return pack(localTime.getHour(), localTime.getMinute(), localTime.getSecond(), localTime.getNano() / NANOS_PER_MILLI);
     }
 
     default LocalTime unpackLocalTime(final int packed) {
-        return LocalTime.of(unpackHour(packed), unpackMinute(packed), unpackSecond(packed));
-    }
-
-    default int packSecondsSinceEpoch(final long secondsSinceEpoch) {
-        return Epoch.fromEpochSeconds(secondsSinceEpoch, this);
+        return LocalTime.of(unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackMilli(packed) * NANOS_PER_MILLI);
     }
 
     default int packMillisSinceEpoch(final long millisSinceEpoch) {
-        return packSecondsSinceEpoch(millisSinceEpoch / MILLIS_PER_SECOND);
+        return Epoch.fromEpochMillis(millisSinceEpoch, this);
     }
 
-    static TimePacker forPacking(final Packing packing) {
+    static MilliTimePacker forPacking(final Packing packing) {
         return packing == Packing.BINARY ? BINARY : DECIMAL;
     }
 
-    TimePacker BINARY = new TimePacker() {
+    MilliTimePacker BINARY = new MilliTimePacker() {
         @Override
-        public int pack(final int hour, final int minute, final int second) {
-            checkValidTime(hour, minute, second);
-            return (hour << 12) | (minute << 6) | second;
+        public int pack(final int hour, final int minute, final int second, final int milli) {
+            checkValidTimeWithMillis(hour, minute, second, milli);
+            return (hour << 22) | (minute << 16) | (second << 10) | milli;
         }
 
         @Override
         public int unpackHour(final int packed) {
-            return checkValidHour(packed >>> 12);
+            return checkValidHour(packed >>> 22);
         }
 
         @Override
         public int unpackMinute(final int packed) {
-            return checkValidMinute((packed >>> 6) & 0x3f);
+            return checkValidMinute((packed >>> 16) & 0x3f);
         }
 
         @Override
         public int unpackSecond(final int packed) {
-            return checkValidSecond(packed & 0x3f);
+            return checkValidSecond((packed >> 10) & 0x3f);
+        }
+
+        @Override
+        public int unpackMilli(final int packed) {
+            return checkValidMilli(packed & 0x3ff);
         }
 
         @Override
@@ -92,30 +94,35 @@ public interface TimePacker {
 
         @Override
         public String toString() {
-            return "TimePacker.BINARY";
+            return "MilliTimePacker.BINARY";
         }
     };
 
-    TimePacker DECIMAL = new TimePacker() {
+    MilliTimePacker DECIMAL = new MilliTimePacker() {
         @Override
-        public int pack(final int hour, final int minute, final int second) {
-            checkValidTime(hour, minute, second);
-            return hour * 10000 + minute * 100 + second;
+        public int pack(final int hour, final int minute, final int second, final int milli) {
+            checkValidTimeWithMillis(hour, minute, second, milli);
+            return hour * 10000000 + minute * 100000 + second * 1000 + milli;
         }
 
         @Override
         public int unpackHour(final int packed) {
-            return checkValidHour(packed / 10000);
+            return checkValidHour(packed / 10000000);
         }
 
         @Override
         public int unpackMinute(final int packed) {
-            return checkValidMinute((packed / 100) % 60);
+            return checkValidMinute((packed / 100000) % 60);
         }
 
         @Override
         public int unpackSecond(final int packed) {
-            return checkValidSecond(packed % 60);
+            return checkValidSecond((packed / 1000) % 60);
+        }
+
+        @Override
+        public int unpackMilli(final int packed) {
+            return checkValidMilli(packed % 1000);
         }
 
         @Override
@@ -125,7 +132,7 @@ public interface TimePacker {
 
         @Override
         public String toString() {
-            return "TimePacker.DECIMAL";
+            return "MilliTimePacker.DECIMAL";
         }
     };
 }
