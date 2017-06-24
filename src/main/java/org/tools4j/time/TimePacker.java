@@ -110,12 +110,12 @@ public interface TimePacker {
 
         @Override
         public int unpackMinute(final int packed) {
-            return checkValidMinute((packed / 100) % 60);
+            return checkValidMinute((packed / 100) % 100);
         }
 
         @Override
         public int unpackSecond(final int packed) {
-            return checkValidSecond(packed % 60);
+            return checkValidSecond(packed % 100);
         }
 
         @Override

@@ -39,6 +39,7 @@ public final class Epoch {
      * The number of days in a 400 year cycle.
      */
     private static final int DAYS_PER_CYCLE = 146097;
+
     /**
      * The number of days from year zero to year 1970.
      * There are five 400 year cycles from year zero to 2000.
@@ -197,18 +198,18 @@ public final class Epoch {
     public static int fromEpochSeconds(final long secondsSinceEpoch, final TimePacker timePacker) {
         final int timeInSeconds = (int)floorMod(secondsSinceEpoch, SECONDS_PER_DAY);
         return timePacker.pack(
-                divMod(timeInSeconds, SECONDS_PER_HOUR, 24),
-                divMod(timeInSeconds, SECONDS_PER_MINUTE, 60),
-                floorMod(timeInSeconds, 60)
+                divMod(timeInSeconds, SECONDS_PER_HOUR, HOURS_PER_DAY),
+                divMod(timeInSeconds, SECONDS_PER_MINUTE, MINUTES_PER_HOUR),
+                floorMod(timeInSeconds, SECONDS_PER_MINUTE)
         );
     }
 
     public static long fromEpochSeconds(final long secondsSinceEpoch, final MilliTimePacker milliTimePacker) {
         final int timeInSeconds = (int)floorMod(secondsSinceEpoch, SECONDS_PER_DAY);
         return milliTimePacker.pack(
-                divMod(timeInSeconds, SECONDS_PER_HOUR, 24),
-                divMod(timeInSeconds, SECONDS_PER_MINUTE, 60),
-                floorMod(timeInSeconds, 60),
+                divMod(timeInSeconds, SECONDS_PER_HOUR, HOURS_PER_DAY),
+                divMod(timeInSeconds, SECONDS_PER_MINUTE, MINUTES_PER_HOUR),
+                floorMod(timeInSeconds, SECONDS_PER_MINUTE),
                 0
         );
     }
@@ -216,9 +217,9 @@ public final class Epoch {
     public static long fromEpochSeconds(final long secondsSinceEpoch, final NanoTimePacker nanoTimePacker) {
         final int timeInSeconds = (int)floorMod(secondsSinceEpoch, SECONDS_PER_DAY);
         return nanoTimePacker.pack(
-                divMod(timeInSeconds, SECONDS_PER_HOUR, 24),
-                divMod(timeInSeconds, SECONDS_PER_MINUTE, 60),
-                floorMod(timeInSeconds, 60),
+                divMod(timeInSeconds, SECONDS_PER_HOUR, HOURS_PER_DAY),
+                divMod(timeInSeconds, SECONDS_PER_MINUTE, MINUTES_PER_HOUR),
+                floorMod(timeInSeconds, SECONDS_PER_MINUTE),
                 0
         );
     }
@@ -230,39 +231,39 @@ public final class Epoch {
     public static int fromEpochMillis(final long millisSinceEpoch, final MilliTimePacker milliTimePacker) {
         final int timeInMillis = (int)floorMod(millisSinceEpoch, MILLIS_PER_DAY);
         return milliTimePacker.pack(
-                divMod(timeInMillis, MILLIS_PER_HOUR, 24),
-                divMod(timeInMillis, MILLIS_PER_MINUTE, 60),
-                divMod(timeInMillis, MILLIS_PER_SECOND, 60),
-                floorMod(timeInMillis, 1000)
+                divMod(timeInMillis, MILLIS_PER_HOUR, HOURS_PER_DAY),
+                divMod(timeInMillis, MILLIS_PER_MINUTE, MINUTES_PER_HOUR),
+                divMod(timeInMillis, MILLIS_PER_SECOND, SECONDS_PER_MINUTE),
+                floorMod(timeInMillis, MILLIS_PER_SECOND)
         );
     }
 
     public static long fromEpochMillis(final long millisSinceEpoch, final NanoTimePacker nanoTimePacker) {
         final int timeInMillis = (int)floorMod(millisSinceEpoch, MILLIS_PER_DAY);
         return nanoTimePacker.pack(
-                divMod(timeInMillis, MILLIS_PER_HOUR, 24),
-                divMod(timeInMillis, MILLIS_PER_MINUTE, 60),
-                divMod(timeInMillis, MILLIS_PER_SECOND, 60),
-                floorMod(timeInMillis, 1000) * NANOS_PER_MILLI
+                divMod(timeInMillis, MILLIS_PER_HOUR, HOURS_PER_DAY),
+                divMod(timeInMillis, MILLIS_PER_MINUTE, MINUTES_PER_HOUR),
+                divMod(timeInMillis, MILLIS_PER_SECOND, SECONDS_PER_MINUTE),
+                floorMod(timeInMillis, MILLIS_PER_SECOND) * NANOS_PER_MILLI
         );
     }
 
     public static long fromEpochNanos(final long nanosSinceEpoch, final NanoTimePacker nanoTimePacker) {
         final int timeInSeconds = divMod(nanosSinceEpoch, NANOS_PER_SECOND, SECONDS_PER_DAY);
         return nanoTimePacker.pack(
-                divMod(timeInSeconds, SECONDS_PER_HOUR, 24),
-                divMod(timeInSeconds, SECONDS_PER_MINUTE, 60),
-                floorMod(timeInSeconds, 60),
+                divMod(timeInSeconds, SECONDS_PER_HOUR, HOURS_PER_DAY),
+                divMod(timeInSeconds, SECONDS_PER_MINUTE, MINUTES_PER_HOUR),
+                floorMod(timeInSeconds, SECONDS_PER_MINUTE),
                 (int)floorMod(nanosSinceEpoch, NANOS_PER_SECOND)
         );
     }
 
     private static int divMod(final int value, final int divisor, final int moduloDivisor) {
-        return floorMod(Math.floorDiv(value, divisor), moduloDivisor);
+        return floorMod(floorDiv(value, divisor), moduloDivisor);
     }
 
     private static int divMod(final long value, final long divisor, final int moduloDivisor) {
-        return (int) floorMod(Math.floorDiv(value, divisor), moduloDivisor);
+        return (int) floorMod(floorDiv(value, divisor), moduloDivisor);
     }
 
     private Epoch() {

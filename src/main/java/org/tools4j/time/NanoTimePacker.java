@@ -25,7 +25,7 @@ package org.tools4j.time;
 
 import java.time.LocalTime;
 
-import static org.tools4j.time.TimeFactors.NANOS_PER_SECOND;
+import static org.tools4j.time.TimeFactors.*;
 import static org.tools4j.time.TimeValidator.*;
 
 public interface NanoTimePacker {
@@ -116,12 +116,12 @@ public interface NanoTimePacker {
 
         @Override
         public int unpackMinute(final long packed) {
-            return checkValidMinute((int)((packed / (100 * NANOS_PER_SECOND)) % 60));
+            return checkValidMinute((int)((packed / (100 * NANOS_PER_SECOND)) % 100));
         }
 
         @Override
         public int unpackSecond(final long packed) {
-            return checkValidSecond((int)((packed / NANOS_PER_SECOND) % 60));
+            return checkValidSecond((int)((packed / NANOS_PER_SECOND) % 100));
         }
 
         @Override

@@ -25,16 +25,23 @@ package org.tools4j.time;
 
 public final class DateValidator {
 
+    public static final int YEAR_MIN = 1;
+    public static final int YEAR_MAX = 9999;
+    public static final int MONTH_MIN = 1;
+    public static final int MONTH_MAX = 12;
+    public static final int DAY_MIN = 1;
+    public static final int DAY_MAX = 31;
+
     public static boolean isValidYear(final long year) {
-        return 1 <= year & year <= 9999;
+        return YEAR_MIN <= year & year <= YEAR_MAX;
     }
 
     public static boolean isValidYear(final int year) {
-        return 1 <= year & year <= 9999;
+        return YEAR_MIN <= year & year <= YEAR_MAX;
     }
 
     public static boolean isValidMonth(final int month) {
-        return 1 <= month & month <= 12;
+        return MONTH_MIN <= month & month <= MONTH_MAX;
     }
 
     public static boolean isValidDate(final int year, final int month, final int day) {
@@ -46,11 +53,11 @@ public final class DateValidator {
 
     //PRECONDITION: valid year and month
     private static boolean isValidDay(final int year, final int month, final int day) {
-        if (day > 0) {
+        if (day >= DAY_MIN) {
             if (day <= 28) {
                 return true;
             }
-            if (day <= 31) {
+            if (day <= DAY_MAX) {
                 if (month != 2) {
                     if (day <= 30) {
                         return true;

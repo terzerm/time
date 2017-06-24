@@ -25,7 +25,7 @@ package org.tools4j.time;
 
 import java.time.LocalTime;
 
-import static org.tools4j.time.TimeFactors.NANOS_PER_MILLI;
+import static org.tools4j.time.TimeFactors.*;
 import static org.tools4j.time.TimeValidator.*;
 
 public interface MilliTimePacker {
@@ -112,17 +112,17 @@ public interface MilliTimePacker {
 
         @Override
         public int unpackMinute(final int packed) {
-            return checkValidMinute((packed / 100000) % 60);
+            return checkValidMinute((packed / 100000) % 100);
         }
 
         @Override
         public int unpackSecond(final int packed) {
-            return checkValidSecond((packed / 1000) % 60);
+            return checkValidSecond((packed / 1000) % 100);
         }
 
         @Override
         public int unpackMilli(final int packed) {
-            return checkValidMilli(packed % 1000);
+            return checkValidMilli(packed % MILLIS_PER_SECOND);
         }
 
         @Override

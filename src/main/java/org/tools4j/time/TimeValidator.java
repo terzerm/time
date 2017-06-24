@@ -27,28 +27,41 @@ import static org.tools4j.time.TimeFactors.*;
 
 public final class TimeValidator {
 
+    public static final int HOUR_MIN = 0;
+    public static final int HOUR_MAX = HOURS_PER_DAY - 1;
+    public static final int MINUTE_MIN = 0;
+    public static final int MINUTE_MAX = MINUTES_PER_HOUR - 1;
+    public static final int SECOND_MIN = 0;
+    public static final int SECOND_MAX = SECONDS_PER_MINUTE - 1;
+    public static final int MILLI_MIN = 0;
+    public static final int MILLI_MAX = MILLIS_PER_SECOND - 1;
+    public static final int MICRO_MIN = 0;
+    public static final int MICRO_MAX = MICROS_PER_SECOND - 1;
+    public static final int NANO_MIN = 0;
+    public static final int NANO_MAX = NANOS_PER_SECOND - 1;
+
     public static boolean isValidHour(final int hour) {
-        return 0 <= hour & hour < HOURS_PER_DAY;
+        return HOUR_MIN <= hour & hour <= HOUR_MAX;
     }
 
     public static boolean isValidMinute(final int minute) {
-        return 0 <= minute & minute < MINUTES_PER_HOUR;
+        return MINUTE_MIN <= minute & minute <= MINUTE_MAX;
     }
 
     public static boolean isValidSecond(final int second) {
-        return 0 <= second & second < SECONDS_PER_MINUTE;
+        return SECOND_MIN <= second & second <= SECOND_MAX;
     }
 
     public static boolean isValidMilli(final int milli) {
-        return 0 <= milli & milli < MILLIS_PER_SECOND;
+        return MILLI_MIN <= milli & milli <= MILLI_MAX;
     }
 
     public static boolean isValidMicro(final int micro) {
-        return 0 <= micro & micro < MICROS_PER_SECOND;
+        return MICRO_MIN <= micro & micro <= MICRO_MAX;
     }
 
     public static boolean isValidNano(final int nano) {
-        return 0 <= nano & nano < NANOS_PER_SECOND;
+        return NANO_MIN <= nano & nano <= NANO_MAX;
     }
 
     public static int checkValidHour(final int hour) {
