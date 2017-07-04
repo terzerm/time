@@ -36,44 +36,44 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Unit test for {@link TimePacker}.
+ * Unit test for {@link MilliTimePacker}.
  */
-public class TimePackerTest {
+public class MilliTimePackerTest {
 
-    private static final TimePacker[] PACKERS = {TimePacker.BINARY, TimePacker.DECIMAL};
+    private static final MilliTimePacker[] PACKERS = {MilliTimePacker.BINARY, MilliTimePacker.DECIMAL};
     private static final LocalDate[] DATES = {LocalDate.of(1, 1, 1), LocalDate.of(1969, 12, 31), LocalDate.of(1970, 1,1), LocalDate.of(2017,06, 06), LocalDate.of(9999, 12, 31)};
 
     @RunWith(Spockito.class)
     @Spockito.Unroll({
-            "| localTime |",
-            "|  00:00:00 |",
-            "|  23:59:59 |",
-            "|  01:01:01 |",
-            "|  10:11:12 |",
-            "|  11:59:59 |",
-            "|  12:59:59 |",
-            "|  12:34:56 |",
+            "|   localTime   |",
+            "|  00:00:00.000 |",
+            "|  23:59:59.999 |",
+            "|  01:01:01.111 |",
+            "|  10:11:12.123 |",
+            "|  11:59:59.999 |",
+            "|  12:59:59.999 |",
+            "|  12:34:56.789 |",
     })
     public static class Valid {
 
-        private static final DateTimeFormatter HHMMSS = DateTimeFormatter.ofPattern("HHmmss");
+        private static final DateTimeFormatter HHMMSSMMM = DateTimeFormatter.ofPattern("HHmmssSSS");
 
         @Test
         public void packDecimal(final LocalTime localTime) throws Exception {
-            final int packed = TimePacker.DECIMAL.pack(localTime);
-            assertEquals(Integer.parseInt(localTime.format(HHMMSS)), packed);
+            final int packed = MilliTimePacker.DECIMAL.pack(localTime);
+            assertEquals(Integer.parseInt(localTime.format(HHMMSSMMM)), packed);
         }
 
         @Test
         public void packBinary(final LocalTime localTime) throws Exception {
-            final int packed = TimePacker.BINARY.pack(localTime);
-            assertEquals((localTime.getHour() << 12) | (localTime.getMinute() << 6) | localTime.getSecond(),
+            final int packed = MilliTimePacker.BINARY.pack(localTime);
+            assertEquals((localTime.getHour() << 22) | (localTime.getMinute() << 16) | (localTime.getSecond() << 10) | (localTime.getNano() / TimeFactors.NANOS_PER_MILLI),
                     packed);
         }
 
         @Test
         public void packAndUnpackLocalTime(final LocalTime localTime) throws Exception {
-            for (final TimePacker packer : PACKERS) {
+            for (final MilliTimePacker packer : PACKERS) {
                 final int packed = packer.pack(localTime);
                 final LocalTime unpacked = packer.unpackLocalTime(packed);
                 assertEquals(packer + ": " + localTime + " -> " + packed, localTime, unpacked);
@@ -81,33 +81,24 @@ public class TimePackerTest {
         }
 
         @Test
-        public void packAndUnpackHourMinuteSecond(final LocalTime localTime) throws Exception {
-            for (final TimePacker packer : PACKERS) {
-                final int packed = packer.pack(localTime.getHour(), localTime.getMinute(), localTime.getSecond());
+        public void packAndUnpackHourMinuteSecondMilli(final LocalTime localTime) throws Exception {
+            for (final MilliTimePacker packer : PACKERS) {
+                final int packed = packer.pack(localTime.getHour(), localTime.getMinute(), localTime.getSecond(), localTime.getNano() / TimeFactors.NANOS_PER_MILLI);
                 final int hour = packer.unpackHour(packed);
                 final int minute = packer.unpackMinute(packed);
                 final int second = packer.unpackSecond(packed);
+                final int milli = packer.unpackMilli(packed);
                 assertEquals(packer + ": " + localTime + " -> " + packed + " [h]", localTime.getHour(), hour);
                 assertEquals(packer + ": " + localTime + " -> " + packed + " [m]", localTime.getMinute(), minute);
                 assertEquals(packer + ": " + localTime + " -> " + packed + " [s]", localTime.getSecond(), second);
-            }
-        }
-
-        @Test
-        public void packSecondsSinceEpoch(final LocalTime localTime) throws Exception {
-            for (final LocalDate date : DATES) {
-                for (final TimePacker packer : PACKERS) {
-                    final int packed = packer.packSecondsSinceEpoch(localTime.atDate(date).toEpochSecond(ZoneOffset.UTC));
-                    final LocalTime unpacked = packer.unpackLocalTime(packed);
-                    assertEquals(packer + ": " + localTime + " -> " + packed, localTime, unpacked);
-                }
+                assertEquals(packer + ": " + localTime + " -> " + packed + " [S]", localTime.getNano() / TimeFactors.NANOS_PER_MILLI, milli);
             }
         }
 
         @Test
         public void packMillisSinceEpoch(final LocalTime localTime) throws Exception {
             for (final LocalDate date : DATES) {
-                for (final TimePacker packer : PACKERS) {
+                for (final MilliTimePacker packer : PACKERS) {
                     final int packed = packer.packMillisSinceEpoch(localTime.atDate(date).toInstant(ZoneOffset.UTC).toEpochMilli());
                     final LocalTime unpacked = packer.unpackLocalTime(packed);
                     assertEquals(packer + ": " + localTime + " -> " + packed, localTime, unpacked);
@@ -118,36 +109,38 @@ public class TimePackerTest {
 
     @RunWith(Spockito.class)
     @Spockito.Unroll({
-            "| hour | minute | second |",
-            "|   -1 |     1  |      1 |",
-            "|    0 |    -1  |      1 |",
-            "|    0 |     0  |     -1 |",
-            "|   24 |     0  |      1 |",
-            "|    0 |    60  |      1 |",
-            "|    0 |     1  |     60 |",
+            "| hour | minute | second | milli |",
+            "|   -1 |     1  |      1 |     0 |",
+            "|    0 |    -1  |      1 |     0 |",
+            "|    0 |     0  |     -1 |     0 |",
+            "|    0 |     0  |      0 |    -1 |",
+            "|   24 |     0  |      1 |     0 |",
+            "|    0 |    60  |      1 |     0 |",
+            "|    0 |     1  |     60 |     0 |",
+            "|    0 |     0  |     59 |  1000 |",
     })
-    @Spockito.Name("[{row}]: {hour}:{minute}:{second}")
+    @Spockito.Name("[{row}]: {hour}:{minute}:{second}.{milli}")
     public static class Invalid {
         @Test(expected = IllegalArgumentException.class)
-        public void packIllegalHourMinuteSecondBinary(final int hour, final int minute, final int second) {
-            TimePacker.BINARY.pack(hour, minute, second);
+        public void packIllegalHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int milli) {
+            MilliTimePacker.BINARY.pack(hour, minute, second, milli);
         }
 
         @Test(expected = IllegalArgumentException.class)
-        public void packIllegalHourMinuteSecondDecimal(final int hour, final int minute, final int second) {
-            TimePacker.DECIMAL.pack(hour, minute, second);
+        public void packIllegalHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
+            MilliTimePacker.DECIMAL.pack(hour, minute, second, milli);
         }
 
         @Test(expected = IllegalArgumentException.class)
-        public void unpackIllegalHourMinuteSecondBinary(final int hour, final int minute, final int second) {
-            final int packed = (hour << 12) | (minute << 6) | second;
-            TimePacker.BINARY.unpackLocalTime(packed);
+        public void unpackIllegalHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int milli) {
+            final int packed = (hour << 22) | (minute << 16) | (second << 10) | milli;
+            MilliTimePacker.BINARY.unpackLocalTime(packed);
         }
 
         @Test(expected = IllegalArgumentException.class)
-        public void unpackIllegalHourMinuteSecondDecimal(final int hour, final int minute, final int second) {
-            final int packed = hour * 10000 + minute * 100 + second;
-            TimePacker.DECIMAL.unpackLocalTime(packed);
+        public void unpackIllegalHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
+            final int packed = hour * 10000000 + minute * 100000 + second * 1000 + milli;
+            MilliTimePacker.DECIMAL.unpackLocalTime(packed);
         }
     }
 
@@ -161,7 +154,7 @@ public class TimePackerTest {
     public static class Special {
         @Test
         public void packAndUnpackNull(final Packing packing) throws Exception {
-            final TimePacker packer = TimePacker.forPacking(packing);
+            final MilliTimePacker packer = MilliTimePacker.forPacking(packing);
             final int packed = packer.packNull();
             final boolean isNull = packer.unpackNull(packed);
             assertEquals(packer + ": pack null", -1, packed);
@@ -170,10 +163,10 @@ public class TimePackerTest {
 
         @Test
         public void packing(final Packing packing) throws Exception {
-            final TimePacker packer = TimePacker.forPacking(packing);
+            final MilliTimePacker packer = MilliTimePacker.forPacking(packing);
             assertEquals(packing, packer.packing());
-            assertEquals(packer, TimePacker.class.getField(packing.name()).get(null));
-            assertEquals(TimePacker.class.getSimpleName() + "." + packing, packer.toString());
+            assertEquals(packer, MilliTimePacker.class.getField(packing.name()).get(null));
+            assertEquals(MilliTimePacker.class.getSimpleName() + "." + packing, packer.toString());
         }
     }
 }

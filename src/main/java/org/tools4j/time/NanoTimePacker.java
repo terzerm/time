@@ -25,7 +25,7 @@ package org.tools4j.time;
 
 import java.time.LocalTime;
 
-import static org.tools4j.time.TimeFactors.*;
+import static org.tools4j.time.TimeFactors.NANOS_PER_SECOND;
 import static org.tools4j.time.TimeValidator.*;
 
 public interface NanoTimePacker {
@@ -47,7 +47,7 @@ public interface NanoTimePacker {
         return pack(localTime.getHour(), localTime.getMinute(), localTime.getSecond(), localTime.getNano());
     }
 
-    default LocalTime unpackLocalTime(final int packed) {
+    default LocalTime unpackLocalTime(final long packed) {
         return LocalTime.of(unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackNano(packed));
     }
 
@@ -105,18 +105,18 @@ public interface NanoTimePacker {
         @Override
         public long pack(final int hour, final int minute, final int second, final int nano) {
             checkValidTimeWithNanos(hour, minute, second, nano);
-            return hour * 10000 * NANOS_PER_SECOND + minute * 100 * NANOS_PER_SECOND +
-                    second * NANOS_PER_SECOND + nano;
+            return hour * (10000L * NANOS_PER_SECOND) + minute * (100L * NANOS_PER_SECOND) +
+                    second * ((long)NANOS_PER_SECOND) + nano;
         }
 
         @Override
         public int unpackHour(final long packed) {
-            return checkValidHour((int)(packed / (10000 * NANOS_PER_SECOND)));
+            return checkValidHour((int)(packed / (10000L * NANOS_PER_SECOND)));
         }
 
         @Override
         public int unpackMinute(final long packed) {
-            return checkValidMinute((int)((packed / (100 * NANOS_PER_SECOND)) % 100));
+            return checkValidMinute((int)((packed / (100L * NANOS_PER_SECOND)) % 100));
         }
 
         @Override
