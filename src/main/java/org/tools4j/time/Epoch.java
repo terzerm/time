@@ -187,7 +187,7 @@ public final class Epoch {
         yearEst += marchMonth0 / 10;
 
         // check year now we are certain it is correct
-        final int year = DateValidator.checkValidYear(yearEst);
+        final int year = validateYear(yearEst);
         return datePacker.pack(year, month, day);
     }
 
@@ -256,6 +256,13 @@ public final class Epoch {
                 floorMod(timeInSeconds, SECONDS_PER_MINUTE),
                 (int)floorMod(nanosSinceEpoch, NANOS_PER_SECOND)
         );
+    }
+
+    private static int validateYear(final long year) {
+        if (DateValidator.YEAR_MIN <= year & year <= DateValidator.YEAR_MAX) {
+            return (int)year;
+        }
+        throw new IllegalArgumentException("Invalid year, must be in [1,9999] but was: " + year);
     }
 
     private static int divMod(final int value, final int divisor, final int moduloDivisor) {

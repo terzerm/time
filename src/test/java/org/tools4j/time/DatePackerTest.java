@@ -31,8 +31,9 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static org.tools4j.time.ValidationMethod.INVALIDATE_RESULT;
+import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
 
 /**
  * Unit test for {@link DatePacker}.
@@ -142,7 +143,7 @@ public class DatePackerTest {
             "|  2017 |   -1  |   1 |",
             "|  2017 |   13  |   1 |",
             "|  2017 |    1  |   0 |",
-            "|  2017 |    1  |  -1 |",
+            "|  2017 |    4  |  -1 |",//NOTE: day=-1 is equivalent to day=31
             "|  2017 |    1  |  32 |",
             "|  2017 |    2  |  29 |",
             "|  2016 |    2  |  30 |",
@@ -157,24 +158,52 @@ public class DatePackerTest {
     public static class Invalid {
         @Test(expected = IllegalArgumentException.class)
         public void packIllegalYearMonthDayBinary(final int year, final int month, final int day) {
-            DatePacker.BINARY.pack(year, month, day);
+            DatePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(year, month, day);
+        }
+
+        @Test
+        public void packInvalidYearMonthDayBinary(final int year, final int month, final int day) {
+            final int packed = DatePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).pack(year, month, day);
+            assertEquals("should be invalid", DatePacker.INVALID, packed);
         }
 
         @Test(expected = IllegalArgumentException.class)
         public void packIllegalYearMonthDayDecimal(final int year, final int month, final int day) {
-            DatePacker.DECIMAL.pack(year, month, day);
+            DatePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(year, month, day);
+        }
+
+        @Test
+        public void packInvalidYearMonthDayDecimal(final int year, final int month, final int day) {
+            final int packed = DatePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).pack(year, month, day);
+            assertEquals("should be invalid", DatePacker.INVALID, packed);
         }
 
         @Test(expected = IllegalArgumentException.class)
         public void unpackIllegalYearMonthDayBinary(final int year, final int month, final int day) {
-            final int packed = (year << 9) | (month << 5) | day;
-            DatePacker.BINARY.unpackDay(packed);
+            final int packed = DatePacker.BINARY.pack(year, month, day);
+            DatePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackDay(packed);
+        }
+
+        @Test
+        public void unpackInvalidYearMonthDayBinary(final int year, final int month, final int day) {
+            final int packed = DatePacker.BINARY.pack(year, month, day);
+            final int invalid = DatePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackDay(packed);
+            assertNotEquals("should not be invalid", DatePacker.INVALID, packed);
+            assertEquals("should be invalid", DatePacker.INVALID, invalid);
         }
 
         @Test(expected = IllegalArgumentException.class)
         public void unpackIllegalYearMonthDayDecimal(final int year, final int month, final int day) {
-            final int packed = year * 10000 + month * 100 + day;
-            DatePacker.DECIMAL.unpackDay(packed);
+            final int packed = DatePacker.DECIMAL.pack(year, month, day);
+            DatePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackDay(packed);
+        }
+
+        @Test
+        public void unpackInvalidYearMonthDayDecimal(final int year, final int month, final int day) {
+            final int packed = DatePacker.DECIMAL.pack(year, month, day);
+            final int invalid = DatePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackDay(packed);
+            assertNotEquals("should not be invalid", DatePacker.INVALID, packed);
+            assertEquals("should be invalid", DatePacker.INVALID, invalid);
         }
     }
 
@@ -188,16 +217,20 @@ public class DatePackerTest {
     public static class Special {
         @Test
         public void packAndUnpackNull(final Packing packing) throws Exception {
-            final DatePacker packer = DatePacker.forPacking(packing);
-            final int packed = packer.packNull();
-            final boolean isNull = packer.unpackNull(packed);
-            assertEquals(packer + ": pack null", 0, packed);
-            assertTrue(packer + ": unpack null", isNull);
+            final DatePacker packer = DatePacker.valueOf(packing);
+            final int packed1 = packer.packNull();
+            final int packed2 = packer.pack(null);
+            final boolean isNull1 = packer.unpackNull(packed1);
+            final boolean isNull2 = packer.unpackNull(packed2);
+            assertEquals(packer + ".packNull()", 0, packed1);
+            assertEquals(packer + ".pack(null)", 0, packed2);
+            assertTrue(packer + ":unpackNull(packNull())", isNull1);
+            assertTrue(packer + ":unpackNull(pack(null))", isNull2);
         }
 
         @Test
         public void packing(final Packing packing) throws Exception {
-            final DatePacker packer = DatePacker.forPacking(packing);
+            final DatePacker packer = DatePacker.valueOf(packing);
             assertEquals(packing, packer.packing());
             assertEquals(packer, DatePacker.class.getField(packing.name()).get(null));
             assertEquals(DatePacker.class.getSimpleName() + "." + packing, packer.toString());

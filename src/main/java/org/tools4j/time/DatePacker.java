@@ -24,28 +24,24 @@
 package org.tools4j.time;
 
 import java.time.LocalDate;
-
-import static org.tools4j.time.DateValidator.*;
+import java.util.Objects;
 
 public interface DatePacker {
+    int INVALID = -1;
+    int NULL = 0;
+    Packing packing();
+    ValidationMethod validationMethod();
+    @Garbage(Garbage.Type.RESULT)
+    DatePacker forValidationMethod(ValidationMethod validationMethod);
     int pack(int year, int month, int day);
     int unpackYear(int packed);
     int unpackMonth(int packed);
     int unpackDay(int packed);
-    Packing packing();
-
-    default int packNull() {
-        return 0;
-    }
-    default boolean unpackNull(int packed) {
-        return packed == 0;
-    }
-    default int pack(final LocalDate localDate) {
-        return pack(localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth());
-    }
-    default LocalDate unpackLocalDate(final int packed) {
-        return LocalDate.of(unpackYear(packed), unpackMonth(packed), unpackDay(packed));
-    }
+    int packNull();
+    boolean unpackNull(int packed);
+    int pack(LocalDate localDate);
+    @Garbage(Garbage.Type.RESULT)
+    LocalDate unpackLocalDate(int packed);
 
     default int packDaysSinceEpoch(final long daysSinceEpoch) {
         return Epoch.fromEpochDays(daysSinceEpoch, this);
@@ -55,30 +51,42 @@ public interface DatePacker {
         return Epoch.fromEpochMillis(millisSinceEpoch, this);
     }
 
-    static DatePacker forPacking(final Packing packing) {
-        return packing == Packing.BINARY ? BINARY : DECIMAL;
+    interface Default extends DatePacker {
+        default int packNull() {
+            return NULL;
+        }
+        default boolean unpackNull(final int packed) {
+            return packed == NULL;
+        }
+        default int pack(final LocalDate localDate) {
+            return localDate == null ? packNull() : pack(
+                    localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth()
+            );
+        }
+        default LocalDate unpackLocalDate(final int packed) {
+            return unpackNull(packed) ? null : LocalDate.of(
+                    unpackYear(packed), unpackMonth(packed), unpackDay(packed)
+            );
+        }
+
+        default int packDaysSinceEpoch(final long daysSinceEpoch) {
+            return Epoch.fromEpochDays(daysSinceEpoch, this);
+        }
+
+        default int packMillisSinceEpoch(final long millisSinceEpoch) {
+            return Epoch.fromEpochMillis(millisSinceEpoch, this);
+        }
+
+        @Override
+        default DatePacker forValidationMethod(final ValidationMethod validationMethod) {
+            return new Validated(this, validationMethod);
+        }
     }
 
-    DatePacker BINARY = new DatePacker() {
+    DatePacker BINARY = new DatePacker.Default() {
         @Override
-        public int pack(final int year, final int month, final int day) {
-            checkValidDate(year, month, day);
-            return (year << 9) | (month << 5) | day;
-        }
-
-        @Override
-        public int unpackYear(final int packed) {
-            return checkValidYear(packed >>> 9);
-        }
-
-        @Override
-        public int unpackMonth(final int packed) {
-            return checkValidMonth((packed >>> 5) & 0xf);
-        }
-
-        @Override
-        public int unpackDay(final int packed) {
-            return checkValidDate(packed >>> 9, (packed >>> 5) & 0xf, packed & 0x1f);
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.UNVALIDATED;
         }
 
         @Override
@@ -87,36 +95,55 @@ public interface DatePacker {
         }
 
         @Override
+        public int pack(final int year, final int month, final int day) {
+            return ((year & 0x3fff) << 9) | ((month & 0xf) << 5) | (day & 0x1f);
+        }
+
+        @Override
+        public int unpackYear(final int packed) {
+            return (packed >>> 9) & 0x3fff;
+        }
+
+        @Override
+        public int unpackMonth(final int packed) {
+            return (packed >>> 5) & 0xf;
+        }
+
+        @Override
+        public int unpackDay(final int packed) {
+            return packed & 0x1f;
+        }
+
+        @Override
         public String toString() {
             return "DatePacker.BINARY";
         }
     };
 
-    DatePacker DECIMAL = new DatePacker() {
+    DatePacker DECIMAL = new DatePacker.Default() {
+        @Override
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.UNVALIDATED;
+        }
+
         @Override
         public int pack(final int year, final int month, final int day) {
-            checkValidDate(year, month, day);
             return (year * 10000) + (month * 100) + day;
         }
 
         @Override
         public int unpackYear(final int packed) {
-            return checkValidYear(packed / 10000);
+            return packed / 10000;
         }
 
         @Override
         public int unpackMonth(final int packed) {
-            return checkValidMonth((packed / 100) % 100);
+            return (packed / 100) % 100;
         }
 
         @Override
         public int unpackDay(final int packed) {
-            int p = packed;
-            final int y = p / 10000;
-            p -= y * 10000;
-            final int m = p / 100;
-            final int d = p - m * 100;
-            return checkValidDate(y, m, d);
+            return packed % 100;
         }
 
         @Override
@@ -129,4 +156,74 @@ public interface DatePacker {
             return "DatePacker.DECIMAL";
         }
     };
+
+    class Validated implements DatePacker.Default {
+        private final DatePacker packer;
+        private final DateValidator validator;
+
+        public Validated(final DatePacker packer, final ValidationMethod validationMethod) {
+            this(packer, DateValidator.valueOf(validationMethod));
+        }
+
+        public Validated(final DatePacker packer, final DateValidator validator) {
+            this.packer = Objects.requireNonNull(packer);
+            this.validator = Objects.requireNonNull(validator);
+        }
+
+        @Override
+        public Packing packing() {
+            return packer.packing();
+        }
+
+        @Override
+        public ValidationMethod validationMethod() {
+            return validator.validationMethod();
+        }
+
+        @Override
+        public int pack(final int year, final int month, final int day) {
+            if (validator.validateDay(year, month, day) == DateValidator.INVALID) {
+                return INVALID;
+            }
+            return packer.pack(year, month, day);
+        }
+
+        @Override
+        public int unpackYear(final int packed) {
+            return validator.validateYear(packer.unpackYear(packed));
+        }
+
+        @Override
+        public int unpackMonth(final int packed) {
+            return validator.validateMonth(packer.unpackMonth(packed));
+        }
+
+        @Override
+        public int unpackDay(final int packed) {
+            final int year = packer.unpackYear(packed);
+            final int month = packer.unpackMonth(packed);
+            final int day  = packer.unpackDay(packed);
+            return validator.validateDay(year, month, day);
+        }
+
+        @Override
+        public String toString() {
+            return packer.toString();
+        }
+    }
+
+
+    static DatePacker valueOf(final Packing packing) {
+        return packing == Packing.BINARY ? BINARY : DECIMAL;
+    }
+
+    static DatePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
+        switch (validationMethod) {
+            case UNVALIDATED:
+                return valueOf(packing);
+            default:
+                return new Validated(valueOf(packing), validationMethod);
+        }
+    }
+
 }

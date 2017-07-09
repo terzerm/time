@@ -23,14 +23,102 @@
  */
 package org.tools4j.time;
 
-public final class DateValidator {
+public enum DateValidator {
+    UNVALIDATED {
+        @Override
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.UNVALIDATED;
+        }
 
+        @Override
+        public int validateYear(final int year) {
+            return year;
+        }
+
+        @Override
+        public int validateMonth(final int month) {
+            return month;
+        }
+
+        @Override
+        public int validateDay(final int year, final int month, final int day) {
+            return day;
+        }
+    },
+    INVALIDATE_RESULT {
+        @Override
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.INVALIDATE_RESULT;
+        }
+
+        @Override
+        public int validateYear(final int year) {
+            return DateValidator.isValidYear(year) ? year : INVALID;
+        }
+
+        @Override
+        public int validateMonth(final int month) {
+            return DateValidator.isValidMonth(month) ? month : INVALID;
+        }
+
+        @Override
+        public int validateDay(final int year, final int month, final int day) {
+            return DateValidator.isValidDate(year, month, day) ? day : INVALID;
+        }
+    },
+    THROW_EXCEPTION {
+        @Override
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.THROW_EXCEPTION;
+        }
+
+        @Override
+        public int validateYear(final int year) {
+            if (DateValidator.isValidYear(year)) {
+                return year;
+            }
+            throw new IllegalArgumentException("Invalid year, must be in [1,9999] but was: " + year);
+        }
+
+        @Override
+        public int validateMonth(final int month) {
+            if (DateValidator.isValidMonth(month)) {
+                return month;
+            }
+            throw new IllegalArgumentException("Invalid month, must be in [1,12] but was: " + month);
+        }
+
+        @Override
+        public int validateDay(final int year, final int month, final int day) {
+            validateYear(year);
+            validateMonth(month);
+            if (isValidDay(year, month, day)) {
+                return day;
+            }
+            throw new IllegalArgumentException("Invalid day in date: " + year + "-" + month + "-" + day);
+        }
+    };
+
+    public static final int INVALID = -1;
     public static final int YEAR_MIN = 1;
     public static final int YEAR_MAX = 9999;
     public static final int MONTH_MIN = 1;
     public static final int MONTH_MAX = 12;
     public static final int DAY_MIN = 1;
     public static final int DAY_MAX = 31;
+
+    public static DateValidator valueOf(final ValidationMethod validationMethod) {
+        switch (validationMethod) {
+            case UNVALIDATED:
+                return UNVALIDATED;
+            case INVALIDATE_RESULT:
+                return INVALIDATE_RESULT;
+            case THROW_EXCEPTION:
+                return THROW_EXCEPTION;
+            default:
+                throw new IllegalArgumentException("Unsupported validate method: " + validationMethod);
+        }
+    }
 
     public static boolean isValidYear(final long year) {
         return YEAR_MIN <= year & year <= YEAR_MAX;
@@ -50,6 +138,14 @@ public final class DateValidator {
         }
         return false;
     }
+
+    abstract public ValidationMethod validationMethod();
+
+    abstract public int validateYear(int year);
+
+    abstract public int validateMonth(int month);
+
+    abstract public int validateDay(int year, int month, int day);
 
     //PRECONDITION: valid year and month
     private static boolean isValidDay(final int year, final int month, final int day) {
@@ -73,39 +169,5 @@ public final class DateValidator {
             }
         }
         return false;
-    }
-
-    public static int checkValidYear(final long year) {
-        if (isValidYear(year)) {
-            return (int)year;
-        }
-        throw new IllegalArgumentException("Invalid year, must be in [1,9999] but was: " + year);
-    }
-
-    public static int checkValidYear(final int year) {
-        if (isValidYear(year)) {
-            return year;
-        }
-        throw new IllegalArgumentException("Invalid year, must be in [1,9999] but was: " + year);
-    }
-
-    public static int checkValidMonth(final int month) {
-        if (isValidMonth(month)) {
-            return month;
-        }
-        throw new IllegalArgumentException("Invalid month, must be in [1,12] but was: " + month);
-    }
-
-    public static int checkValidDate(final int year, final int month, final int day) {
-        checkValidYear(year);
-        checkValidMonth(month);
-        if (isValidDay(year, month, day)) {
-            return day;
-        }
-        throw new IllegalArgumentException("Invalid day in date: " + year + "-" + month + "-" + day);
-    }
-
-    private DateValidator() {
-        throw new RuntimeException("No DateValidator for you!");
     }
 }
