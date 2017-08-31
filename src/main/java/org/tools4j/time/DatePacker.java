@@ -42,56 +42,61 @@ public interface DatePacker {
     int pack(LocalDate localDate);
     @Garbage(Garbage.Type.RESULT)
     LocalDate unpackLocalDate(int packed);
-
-    default int packDaysSinceEpoch(final long daysSinceEpoch) {
-        return Epoch.fromEpochDays(daysSinceEpoch, this);
-    }
-
-    default int packMillisSinceEpoch(final long millisSinceEpoch) {
-        return Epoch.fromEpochMillis(millisSinceEpoch, this);
-    }
+    int packDaysSinceEpoch(long daysSinceEpoch);
+    int packMillisSinceEpoch(long millisSinceEpoch);
 
     interface Default extends DatePacker {
+        @Override
         default int packNull() {
             return NULL;
         }
+
+        @Override
         default boolean unpackNull(final int packed) {
             return packed == NULL;
         }
+
+        @Override
         default int pack(final LocalDate localDate) {
             return localDate == null ? packNull() : pack(
                     localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth()
             );
         }
+
+        @Override
+        @Garbage(Garbage.Type.RESULT)
         default LocalDate unpackLocalDate(final int packed) {
             return unpackNull(packed) ? null : LocalDate.of(
                     unpackYear(packed), unpackMonth(packed), unpackDay(packed)
             );
         }
 
+        @Override
         default int packDaysSinceEpoch(final long daysSinceEpoch) {
             return Epoch.fromEpochDays(daysSinceEpoch, this);
         }
 
+        @Override
         default int packMillisSinceEpoch(final long millisSinceEpoch) {
             return Epoch.fromEpochMillis(millisSinceEpoch, this);
         }
 
         @Override
+        @Garbage(Garbage.Type.RESULT)
         default DatePacker forValidationMethod(final ValidationMethod validationMethod) {
-            return new Validated(this, validationMethod);
+            return valueOf(packing(), validationMethod);
         }
     }
 
     DatePacker BINARY = new DatePacker.Default() {
         @Override
-        public ValidationMethod validationMethod() {
-            return ValidationMethod.UNVALIDATED;
+        public Packing packing() {
+            return Packing.BINARY;
         }
 
         @Override
-        public Packing packing() {
-            return Packing.BINARY;
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.UNVALIDATED;
         }
 
         @Override
@@ -122,6 +127,11 @@ public interface DatePacker {
 
     DatePacker DECIMAL = new DatePacker.Default() {
         @Override
+        public Packing packing() {
+            return Packing.DECIMAL;
+        }
+
+        @Override
         public ValidationMethod validationMethod() {
             return ValidationMethod.UNVALIDATED;
         }
@@ -144,11 +154,6 @@ public interface DatePacker {
         @Override
         public int unpackDay(final int packed) {
             return packed % 100;
-        }
-
-        @Override
-        public Packing packing() {
-            return Packing.DECIMAL;
         }
 
         @Override
@@ -182,10 +187,10 @@ public interface DatePacker {
 
         @Override
         public int pack(final int year, final int month, final int day) {
-            if (validator.validateDay(year, month, day) == DateValidator.INVALID) {
-                return INVALID;
+            if (validator.validateDay(year, month, day) != DateValidator.INVALID) {
+                return packer.pack(year, month, day);
             }
-            return packer.pack(year, month, day);
+            return INVALID;
         }
 
         @Override
@@ -208,7 +213,7 @@ public interface DatePacker {
 
         @Override
         public String toString() {
-            return packer.toString();
+            return "DatePacker.Validated." + packer.packing();
         }
     }
 
@@ -217,6 +222,7 @@ public interface DatePacker {
         return packing == Packing.BINARY ? BINARY : DECIMAL;
     }
 
+    @Garbage(Garbage.Type.RESULT)
     static DatePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
         switch (validationMethod) {
             case UNVALIDATED:

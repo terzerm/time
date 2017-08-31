@@ -23,8 +23,15 @@
  */
 package org.tools4j.time;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+
 public interface CharReader<S> {
     char readChar(S source, int index);
 
     CharReader<CharSequence> CHAR_SEQUENCE = (s, i) -> s.charAt(i);
+    CharReader<char[]> CHAR_ARRAY = (a, i) -> a[i];
+    CharReader<byte[]> BYTE_ARRAY = (a, i) -> (char)a[i];
+    CharReader<CharBuffer> CHAR_BUFFER = (b, i) -> b.get(i);
+    CharReader<ByteBuffer> BYTE_BUFFER = (b, i) -> (char)b.get(i);
 }

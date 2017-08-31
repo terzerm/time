@@ -24,70 +24,99 @@
 package org.tools4j.time;
 
 import java.time.LocalTime;
+import java.util.Objects;
 
 import static org.tools4j.time.TimeFactors.MILLIS_PER_SECOND;
-import static org.tools4j.time.TimeValidator.*;
 
 public interface TimePacker {
+    int INVALID = -1;
+    int NULL = Integer.MAX_VALUE;
+    Packing packing();
+    ValidationMethod validationMethod();
+    @Garbage(Garbage.Type.RESULT)
+    TimePacker forValidationMethod(ValidationMethod validationMethod);
     int pack(int hour, int minute, int second);
     int unpackHour(int packed);
     int unpackMinute(int packed);
     int unpackSecond(int packed);
-    Packing packing();
+    int packNull();
+    boolean unpackNull(int packed);
+    int pack(LocalTime localTime);
+    @Garbage(Garbage.Type.RESULT)
+    LocalTime unpackLocalTime(int packed);
+    int packSecondsSinceEpoch(long secondsSinceEpoch);
+    int packMillisSinceEpoch(long millisSinceEpoch);
 
-    default int packNull() {
-        return -1;
+    interface Default extends TimePacker {
+        @Override
+        default int packNull() {
+            return NULL;
+        }
+
+        @Override
+        default boolean unpackNull(final int packed) {
+            return packed == NULL;
+        }
+
+        @Override
+        default int pack(final LocalTime localTime) {
+            return localTime == null ? packNull() :
+                    pack(localTime.getHour(), localTime.getMinute(), localTime.getSecond());
+        }
+
+        @Override
+        @Garbage(Garbage.Type.RESULT)
+        default LocalTime unpackLocalTime(final int packed) {
+            return unpackNull(packed) ? null :
+                    LocalTime.of(unpackHour(packed), unpackMinute(packed), unpackSecond(packed));
+        }
+
+        @Override
+        default int packSecondsSinceEpoch(final long secondsSinceEpoch) {
+            return Epoch.fromEpochSeconds(secondsSinceEpoch, this);
+        }
+
+        @Override
+        default int packMillisSinceEpoch(final long millisSinceEpoch) {
+            return packSecondsSinceEpoch(millisSinceEpoch / MILLIS_PER_SECOND);
+        }
+
+        @Override
+        @Garbage(Garbage.Type.RESULT)
+        default TimePacker forValidationMethod(final ValidationMethod validationMethod) {
+            return valueOf(packing(), validationMethod);
+        }
     }
 
-    default boolean unpackNull(final int packed) {
-        return packed == -1;
-    }
+    TimePacker BINARY = new Default() {
+        @Override
+        public Packing packing() {
+            return Packing.BINARY;
+        }
 
-    default int pack(final LocalTime localTime) {
-        return pack(localTime.getHour(), localTime.getMinute(), localTime.getSecond());
-    }
+        @Override
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.UNVALIDATED;
+        }
 
-    default LocalTime unpackLocalTime(final int packed) {
-        return LocalTime.of(unpackHour(packed), unpackMinute(packed), unpackSecond(packed));
-    }
-
-    default int packSecondsSinceEpoch(final long secondsSinceEpoch) {
-        return Epoch.fromEpochSeconds(secondsSinceEpoch, this);
-    }
-
-    default int packMillisSinceEpoch(final long millisSinceEpoch) {
-        return packSecondsSinceEpoch(millisSinceEpoch / MILLIS_PER_SECOND);
-    }
-
-    static TimePacker forPacking(final Packing packing) {
-        return packing == Packing.BINARY ? BINARY : DECIMAL;
-    }
-
-    TimePacker BINARY = new TimePacker() {
         @Override
         public int pack(final int hour, final int minute, final int second) {
-            checkValidTime(hour, minute, second);
             return (hour << 12) | (minute << 6) | second;
         }
 
         @Override
         public int unpackHour(final int packed) {
-            return checkValidHour(packed >>> 12);
+            return packed >>> 12;
         }
 
         @Override
         public int unpackMinute(final int packed) {
-            return checkValidMinute((packed >>> 6) & 0x3f);
+            return (packed >>> 6) & 0x3f;
         }
 
         @Override
         public int unpackSecond(final int packed) {
-            return checkValidSecond(packed & 0x3f);
-        }
-
-        @Override
-        public Packing packing() {
-            return Packing.BINARY;
+            return packed & 0x3f;
         }
 
         @Override
@@ -96,31 +125,35 @@ public interface TimePacker {
         }
     };
 
-    TimePacker DECIMAL = new TimePacker() {
+    TimePacker DECIMAL = new Default() {
+        @Override
+        public Packing packing() {
+            return Packing.DECIMAL;
+        }
+
+        @Override
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.UNVALIDATED;
+        }
+
         @Override
         public int pack(final int hour, final int minute, final int second) {
-            checkValidTime(hour, minute, second);
             return hour * 10000 + minute * 100 + second;
         }
 
         @Override
         public int unpackHour(final int packed) {
-            return checkValidHour(packed / 10000);
+            return packed / 10000;
         }
 
         @Override
         public int unpackMinute(final int packed) {
-            return checkValidMinute((packed / 100) % 100);
+            return (packed / 100) % 100;
         }
 
         @Override
         public int unpackSecond(final int packed) {
-            return checkValidSecond(packed % 100);
-        }
-
-        @Override
-        public Packing packing() {
-            return Packing.DECIMAL;
+            return packed % 100;
         }
 
         @Override
@@ -128,4 +161,69 @@ public interface TimePacker {
             return "TimePacker.DECIMAL";
         }
     };
+
+    class Validated implements Default {
+        private final TimePacker packer;
+        private final TimeValidator validator;
+
+        public Validated(final TimePacker packer, final ValidationMethod validationMethod) {
+            this(packer, TimeValidator.valueOf(validationMethod));
+        }
+
+        public Validated(final TimePacker packer, final TimeValidator validator) {
+            this.packer = Objects.requireNonNull(packer);
+            this.validator = Objects.requireNonNull(validator);
+        }
+
+        @Override
+        public Packing packing() {
+            return packer.packing();
+        }
+
+        @Override
+        public ValidationMethod validationMethod() {
+            return validator.validationMethod();
+        }
+
+        @Override
+        public int pack(final int hour, final int minute, final int second) {
+            if (validator.validateTime(hour, minute, second) != TimeValidator.INVALID) {
+                return packer.pack(hour, minute, second);
+            }
+            return INVALID;
+        }
+
+        @Override
+        public int unpackHour(final int packed) {
+            return validator.validateHour(packer.unpackHour(packed));
+        }
+
+        @Override
+        public int unpackMinute(final int packed) {
+            return validator.validateMinute(packer.unpackMinute(packed));
+        }
+
+        @Override
+        public int unpackSecond(final int packed) {
+            return validator.validateSecond(packer.unpackSecond(packed));
+        }
+        @Override
+        public String toString() {
+            return "TimePacker.Validated." + packer.packing();
+        }
+    }
+
+    static TimePacker valueOf(final Packing packing) {
+        return packing == Packing.BINARY ? BINARY : DECIMAL;
+    }
+
+    @Garbage(Garbage.Type.RESULT)
+    static TimePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
+        switch (validationMethod) {
+            case UNVALIDATED:
+                return valueOf(packing);
+            default:
+                return new Validated(valueOf(packing), validationMethod);
+        }
+    }
 }

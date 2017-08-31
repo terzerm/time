@@ -34,6 +34,7 @@ import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
 
 /**
  * Unit test for {@link MilliTimePacker}.
@@ -123,24 +124,24 @@ public class MilliTimePackerTest {
     public static class Invalid {
         @Test(expected = IllegalArgumentException.class)
         public void packIllegalHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int milli) {
-            MilliTimePacker.BINARY.pack(hour, minute, second, milli);
+            MilliTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second, milli);
         }
 
         @Test(expected = IllegalArgumentException.class)
         public void packIllegalHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
-            MilliTimePacker.DECIMAL.pack(hour, minute, second, milli);
+            MilliTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second, milli);
         }
 
         @Test(expected = IllegalArgumentException.class)
         public void unpackIllegalHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int milli) {
             final int packed = (hour << 22) | (minute << 16) | (second << 10) | milli;
-            MilliTimePacker.BINARY.unpackLocalTime(packed);
+            MilliTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
 
         @Test(expected = IllegalArgumentException.class)
         public void unpackIllegalHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
             final int packed = hour * 10000000 + minute * 100000 + second * 1000 + milli;
-            MilliTimePacker.DECIMAL.unpackLocalTime(packed);
+            MilliTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
     }
 
@@ -154,16 +155,16 @@ public class MilliTimePackerTest {
     public static class Special {
         @Test
         public void packAndUnpackNull(final Packing packing) throws Exception {
-            final MilliTimePacker packer = MilliTimePacker.forPacking(packing);
+            final MilliTimePacker packer = MilliTimePacker.valueOf(packing);
             final int packed = packer.packNull();
             final boolean isNull = packer.unpackNull(packed);
-            assertEquals(packer + ": pack null", -1, packed);
+            assertEquals(packer + ": pack null", MilliTimePacker.NULL, packed);
             assertTrue(packer + ": unpack null", isNull);
         }
 
         @Test
         public void packing(final Packing packing) throws Exception {
-            final MilliTimePacker packer = MilliTimePacker.forPacking(packing);
+            final MilliTimePacker packer = MilliTimePacker.valueOf(packing);
             assertEquals(packing, packer.packing());
             assertEquals(packer, MilliTimePacker.class.getField(packing.name()).get(null));
             assertEquals(MilliTimePacker.class.getSimpleName() + "." + packing, packer.toString());

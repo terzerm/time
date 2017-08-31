@@ -35,6 +35,7 @@ import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
 
 /**
  * Unit test for {@link NanoTimePacker}.
@@ -139,24 +140,24 @@ public class NanoTimePackerTest {
     public static class Invalid {
         @Test(expected = IllegalArgumentException.class)
         public void packIllegalHourMinuteSecondNanoBinary(final int hour, final int minute, final int second, final int nano) {
-            NanoTimePacker.BINARY.pack(hour, minute, second, nano);
+            NanoTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second, nano);
         }
 
         @Test(expected = IllegalArgumentException.class)
         public void packIllegalHourMinuteSecondNanoDecimal(final int hour, final int minute, final int second, final int nano) {
-            NanoTimePacker.DECIMAL.pack(hour, minute, second, nano);
+            NanoTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second, nano);
         }
 
         @Test(expected = IllegalArgumentException.class)
         public void unpackIllegalHourMinuteSecondNanoBinary(final int hour, final int minute, final int second, final int nano) {
             final long packed = (((long)hour) << 42) | (((long)minute) << 36) | (((long)second) << 30) | nano;
-            NanoTimePacker.BINARY.unpackLocalTime(packed);
+            NanoTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
 
         @Test(expected = IllegalArgumentException.class)
         public void unpackIllegalHourMinuteSecondNanoDecimal(final int hour, final int minute, final int second, final int nano) {
             final long packed = hour * 10000000000000L + minute * 100000000000L + second * 1000000000L + nano;
-            NanoTimePacker.DECIMAL.unpackLocalTime(packed);
+            NanoTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
     }
 
@@ -170,16 +171,16 @@ public class NanoTimePackerTest {
     public static class Special {
         @Test
         public void packAndUnpackNull(final Packing packing) throws Exception {
-            final NanoTimePacker packer = NanoTimePacker.forPacking(packing);
+            final NanoTimePacker packer = NanoTimePacker.valueOf(packing);
             final long packed = packer.packNull();
             final boolean isNull = packer.unpackNull(packed);
-            assertEquals(packer + ": pack null", -1, packed);
+            assertEquals(packer + ": pack null", NanoTimePacker.NULL, packed);
             assertTrue(packer + ": unpack null", isNull);
         }
 
         @Test
         public void packing(final Packing packing) throws Exception {
-            final NanoTimePacker packer = NanoTimePacker.forPacking(packing);
+            final NanoTimePacker packer = NanoTimePacker.valueOf(packing);
             assertEquals(packing, packer.packing());
             assertEquals(packer, NanoTimePacker.class.getField(packing.name()).get(null));
             assertEquals(NanoTimePacker.class.getSimpleName() + "." + packing, packer.toString());

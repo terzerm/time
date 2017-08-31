@@ -23,7 +23,13 @@
  */
 package org.tools4j.time;
 
+/**
+ * Defines validators for date components.
+ */
 public enum DateValidator {
+    /**
+     * No date validation is performed and inputs are returned unchecked.
+     */
     UNVALIDATED {
         @Override
         public ValidationMethod validationMethod() {
@@ -45,6 +51,9 @@ public enum DateValidator {
             return day;
         }
     },
+    /**
+     * Date validation is performed and failure is signalled by the special {@link #INVALID} result value.
+     */
     INVALIDATE_RESULT {
         @Override
         public ValidationMethod validationMethod() {
@@ -66,6 +75,9 @@ public enum DateValidator {
             return DateValidator.isValidDate(year, month, day) ? day : INVALID;
         }
     },
+    /**
+     * Date validation is performed and failure is signalled through an {@link IllegalArgumentException}.
+     */
     THROW_EXCEPTION {
         @Override
         public ValidationMethod validationMethod() {
@@ -99,6 +111,7 @@ public enum DateValidator {
         }
     };
 
+    /** Special result value returned by {@link DateValidator#INVALIDATE_RESULT} in case of invalid input values*/
     public static final int INVALID = -1;
     public static final int YEAR_MIN = 1;
     public static final int YEAR_MAX = 9999;
@@ -118,10 +131,6 @@ public enum DateValidator {
             default:
                 throw new IllegalArgumentException("Unsupported validate method: " + validationMethod);
         }
-    }
-
-    public static boolean isValidYear(final long year) {
-        return YEAR_MIN <= year & year <= YEAR_MAX;
     }
 
     public static boolean isValidYear(final int year) {

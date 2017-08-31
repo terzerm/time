@@ -24,75 +24,105 @@
 package org.tools4j.time;
 
 import java.time.LocalTime;
+import java.util.Objects;
 
 import static org.tools4j.time.TimeFactors.NANOS_PER_SECOND;
-import static org.tools4j.time.TimeValidator.*;
 
 public interface NanoTimePacker {
+    long INVALID = -1;
+    long NULL = Long.MAX_VALUE;
+    Packing packing();
+    ValidationMethod validationMethod();
+    @Garbage(Garbage.Type.RESULT)
+    NanoTimePacker forValidationMethod(ValidationMethod validationMethod);
     long pack(int hour, int minute, int second, int nano);
     int unpackHour(long packed);
     int unpackMinute(long packed);
     int unpackSecond(long packed);
     int unpackNano(long packed);
-    Packing packing();
+    long packNull();
+    boolean unpackNull(long packed);
+    long pack(LocalTime localTime);
+    @Garbage(Garbage.Type.RESULT)
+    LocalTime unpackLocalTime(long packed);
+    long packMillisSinceEpoch(long millisSinceEpoch);
+    long packNanosSinceEpoch(long nanosSinceEpoch);
 
-    default long packNull() {
-        return -1L;
-    }
-    default boolean unpackNull(long packed) {
-        return packed == -1L;
+    interface Default extends NanoTimePacker {
+        @Override
+        default long packNull() {
+            return NULL;
+        }
+
+        @Override
+        default boolean unpackNull(final long packed) {
+            return packed == NULL;
+        }
+
+        @Override
+        default long pack(final LocalTime localTime) {
+            return localTime == null ? packNull() :
+                    pack(localTime.getHour(), localTime.getMinute(), localTime.getSecond(), localTime.getNano());
+        }
+
+        @Override
+        @Garbage(Garbage.Type.RESULT)
+        default LocalTime unpackLocalTime(final long packed) {
+            return unpackNull(packed) ? null :
+                    LocalTime.of(unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackNano(packed));
+        }
+
+        @Override
+        default long packMillisSinceEpoch(final long millisSinceEpoch) {
+            return Epoch.fromEpochMillis(millisSinceEpoch, this);
+        }
+
+        @Override
+        default long packNanosSinceEpoch(final long nanosSinceEpoch) {
+            return Epoch.fromEpochNanos(nanosSinceEpoch, this);
+        }
+
+        @Override
+        @Garbage(Garbage.Type.RESULT)
+        default NanoTimePacker forValidationMethod(final ValidationMethod validationMethod) {
+            return valueOf(packing(), validationMethod);
+        }
     }
 
-    default long pack(final LocalTime localTime) {
-        return pack(localTime.getHour(), localTime.getMinute(), localTime.getSecond(), localTime.getNano());
-    }
+    NanoTimePacker BINARY = new Default() {
+        @Override
+        public Packing packing() {
+            return Packing.BINARY;
+        }
 
-    default LocalTime unpackLocalTime(final long packed) {
-        return LocalTime.of(unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackNano(packed));
-    }
+        @Override
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.UNVALIDATED;
+        }
 
-    default long packMillisSinceEpoch(final long millisSinceEpoch) {
-        return Epoch.fromEpochMillis(millisSinceEpoch, this);
-    }
-
-    default long packNanosSinceEpoch(final long nanosSinceEpoch) {
-        return Epoch.fromEpochNanos(nanosSinceEpoch, this);
-    }
-
-    static NanoTimePacker forPacking(final Packing packing) {
-        return packing == Packing.BINARY ? BINARY : DECIMAL;
-    }
-
-    NanoTimePacker BINARY = new NanoTimePacker() {
         @Override
         public long pack(final int hour, final int minute, final int second, final int nano) {
-            checkValidTimeWithNanos(hour, minute, second, nano);
-            return ((hour & 0x3fL) << 42) | ((minute & 0x3fL) << 36) | ((second & 0x3fL) << 30) | (nano & 0x3fffffffL);
+            return (((long)hour) << 42) | (((long)minute) << 36) | (((long)second) << 30) | nano;
         }
 
         @Override
         public int unpackHour(final long packed) {
-            return checkValidHour((int)(packed >>> 42));
+            return (int)(packed >>> 42);
         }
 
         @Override
         public int unpackMinute(final long packed) {
-            return checkValidMinute((int)((packed >>> 36) & 0x3f));
+            return (int)((packed >>> 36) & 0x3fL);
         }
 
         @Override
         public int unpackSecond(final long packed) {
-            return checkValidSecond((int)((packed >>> 30) & 0x3f));
+            return (int)((packed >> 30) & 0x3fL);
         }
 
         @Override
         public int unpackNano(final long packed) {
-            return checkValidNano((int)(packed & 0x3fffffff));
-        }
-
-        @Override
-        public Packing packing() {
-            return Packing.BINARY;
+            return (int)(packed & 0x3fffffffL);
         }
 
         @Override
@@ -101,37 +131,40 @@ public interface NanoTimePacker {
         }
     };
 
-    NanoTimePacker DECIMAL = new NanoTimePacker() {
+    NanoTimePacker DECIMAL = new Default() {
+        @Override
+        public Packing packing() {
+            return Packing.DECIMAL;
+        }
+
+        @Override
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.UNVALIDATED;
+        }
+
         @Override
         public long pack(final int hour, final int minute, final int second, final int nano) {
-            checkValidTimeWithNanos(hour, minute, second, nano);
-            return hour * (10000L * NANOS_PER_SECOND) + minute * (100L * NANOS_PER_SECOND) +
-                    second * ((long)NANOS_PER_SECOND) + nano;
+            return hour * (10000L * NANOS_PER_SECOND) + minute * (100L * NANOS_PER_SECOND) + second * ((long)NANOS_PER_SECOND) + nano;
         }
 
         @Override
         public int unpackHour(final long packed) {
-            return checkValidHour((int)(packed / (10000L * NANOS_PER_SECOND)));
+            return (int)(packed / (10000L * NANOS_PER_SECOND));
         }
 
         @Override
         public int unpackMinute(final long packed) {
-            return checkValidMinute((int)((packed / (100L * NANOS_PER_SECOND)) % 100));
+            return (int)((packed / (100L * NANOS_PER_SECOND)) % 100L);
         }
 
         @Override
         public int unpackSecond(final long packed) {
-            return checkValidSecond((int)((packed / NANOS_PER_SECOND) % 100));
+            return (int)((packed / NANOS_PER_SECOND) % 100L);
         }
 
         @Override
         public int unpackNano(final long packed) {
-            return checkValidNano((int)(packed % NANOS_PER_SECOND));
-        }
-
-        @Override
-        public Packing packing() {
-            return Packing.DECIMAL;
+            return (int)(packed % NANOS_PER_SECOND);
         }
 
         @Override
@@ -139,4 +172,75 @@ public interface NanoTimePacker {
             return "NanoTimePacker.DECIMAL";
         }
     };
+
+    class Validated implements Default {
+        private final NanoTimePacker packer;
+        private final TimeValidator validator;
+
+        public Validated(final NanoTimePacker packer, final ValidationMethod validationMethod) {
+            this(packer, TimeValidator.valueOf(validationMethod));
+        }
+
+        public Validated(final NanoTimePacker packer, final TimeValidator validator) {
+            this.packer = Objects.requireNonNull(packer);
+            this.validator = Objects.requireNonNull(validator);
+        }
+
+        @Override
+        public Packing packing() {
+            return packer.packing();
+        }
+
+        @Override
+        public ValidationMethod validationMethod() {
+            return validator.validationMethod();
+        }
+
+        @Override
+        public long pack(final int hour, final int minute, final int second, final int nano) {
+            if (validator.validateTimeWithNanos(hour, minute, second, nano) != TimeValidator.INVALID) {
+                return packer.pack(hour, minute, second, nano);
+            }
+            return INVALID;
+        }
+
+        @Override
+        public int unpackHour(final long packed) {
+            return validator.validateHour(packer.unpackHour(packed));
+        }
+
+        @Override
+        public int unpackMinute(final long packed) {
+            return validator.validateMinute(packer.unpackMinute(packed));
+        }
+
+        @Override
+        public int unpackSecond(final long packed) {
+            return validator.validateSecond(packer.unpackSecond(packed));
+        }
+
+        @Override
+        public int unpackNano(final long packed) {
+            return validator.validateNano(packer.unpackNano(packed));
+        }
+
+        @Override
+        public String toString() {
+            return "NanoTimePacker.Validated." + packer.packing();
+        }
+    }
+
+    static NanoTimePacker valueOf(final Packing packing) {
+        return packing == Packing.BINARY ? BINARY : DECIMAL;
+    }
+
+    @Garbage(Garbage.Type.RESULT)
+    static NanoTimePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
+        switch (validationMethod) {
+            case UNVALIDATED:
+                return valueOf(packing);
+            default:
+                return new Validated(valueOf(packing), validationMethod);
+        }
+    }
 }

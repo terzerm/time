@@ -34,6 +34,7 @@ import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
 
 /**
  * Unit test for {@link TimePacker}.
@@ -130,24 +131,24 @@ public class TimePackerTest {
     public static class Invalid {
         @Test(expected = IllegalArgumentException.class)
         public void packIllegalHourMinuteSecondBinary(final int hour, final int minute, final int second) {
-            TimePacker.BINARY.pack(hour, minute, second);
+            TimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second);
         }
 
         @Test(expected = IllegalArgumentException.class)
         public void packIllegalHourMinuteSecondDecimal(final int hour, final int minute, final int second) {
-            TimePacker.DECIMAL.pack(hour, minute, second);
+            TimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second);
         }
 
         @Test(expected = IllegalArgumentException.class)
         public void unpackIllegalHourMinuteSecondBinary(final int hour, final int minute, final int second) {
             final int packed = (hour << 12) | (minute << 6) | second;
-            TimePacker.BINARY.unpackLocalTime(packed);
+            TimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
 
         @Test(expected = IllegalArgumentException.class)
         public void unpackIllegalHourMinuteSecondDecimal(final int hour, final int minute, final int second) {
             final int packed = hour * 10000 + minute * 100 + second;
-            TimePacker.DECIMAL.unpackLocalTime(packed);
+            TimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
     }
 
@@ -161,16 +162,16 @@ public class TimePackerTest {
     public static class Special {
         @Test
         public void packAndUnpackNull(final Packing packing) throws Exception {
-            final TimePacker packer = TimePacker.forPacking(packing);
+            final TimePacker packer = TimePacker.valueOf(packing);
             final int packed = packer.packNull();
             final boolean isNull = packer.unpackNull(packed);
-            assertEquals(packer + ": pack null", -1, packed);
+            assertEquals(packer + ": pack null", TimePacker.NULL, packed);
             assertTrue(packer + ": unpack null", isNull);
         }
 
         @Test
         public void packing(final Packing packing) throws Exception {
-            final TimePacker packer = TimePacker.forPacking(packing);
+            final TimePacker packer = TimePacker.valueOf(packing);
             assertEquals(packing, packer.packing());
             assertEquals(packer, TimePacker.class.getField(packing.name()).get(null));
             assertEquals(TimePacker.class.getSimpleName() + "." + packing, packer.toString());

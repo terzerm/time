@@ -23,6 +23,9 @@
  */
 package org.tools4j.time;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+
 public interface CharWriter<T> {
     void writeChar(T target, int index, char value);
 
@@ -35,4 +38,8 @@ public interface CharWriter<T> {
         s.setLength(Math.max(i + 1, s.length()));
         s.setCharAt(i, v);
     };
+    CharWriter<char[]> CHAR_ARRAY = (a, i, v) -> a[i] = v;
+    CharWriter<byte[]> BYTE_ARRAY = (a, i, v) -> a[i] = (byte)v;
+    CharWriter<CharBuffer> CHAR_BUFFER = (b, i, v) -> b.put(i, v);
+    CharWriter<ByteBuffer> BYTE_BUFFER = (b, i, v) -> b.put(i, (byte)v);
 }

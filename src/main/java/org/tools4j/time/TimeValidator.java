@@ -25,8 +25,153 @@ package org.tools4j.time;
 
 import static org.tools4j.time.TimeFactors.*;
 
-public final class TimeValidator {
+/**
+ * Defines validators for time components.
+ */
+public enum TimeValidator {
+    /**
+     * No date validation is performed and inputs are returned unchecked.
+     */
+    UNVALIDATED {
+        @Override
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.UNVALIDATED;
+        }
 
+        @Override
+        public int validateHour(final int hour) {
+            return hour;
+        }
+
+        @Override
+        public int validateMinute(final int minute) {
+            return minute;
+        }
+
+        @Override
+        public int validateSecond(final int second) {
+            return second;
+        }
+
+        @Override
+        public int validateMilli(final int milli) {
+            return milli;
+        }
+
+        @Override
+        public int validateMicro(final int micro) {
+            return micro;
+        }
+
+        @Override
+        public int validateNano(final int nano) {
+            return nano;
+        }
+    },
+    /**
+     * Date validation is performed and failure is signalled by the special {@link #INVALID} result value.
+     */
+    INVALIDATE_RESULT {
+        @Override
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.INVALIDATE_RESULT;
+        }
+
+        @Override
+        public int validateHour(final int hour) {
+            return isValidHour(hour) ? hour : INVALID;
+        }
+
+        @Override
+        public int validateMinute(final int minute) {
+            return isValidMinute(minute) ? minute : INVALID;
+        }
+
+        @Override
+        public int validateSecond(final int second) {
+            return isValidSecond(second) ? second : INVALID;
+        }
+
+        @Override
+        public int validateMilli(final int milli) {
+            return isValidMilli(milli) ? milli : INVALID;
+        }
+
+        @Override
+        public int validateMicro(final int micro) {
+            return isValidMicro(micro) ? micro : INVALID;
+        }
+
+        @Override
+        public int validateNano(final int nano) {
+            return isValidNano(nano) ? nano : INVALID;
+        }
+    },
+    /**
+     * Date validation is performed and failure is signalled through an {@link IllegalArgumentException}.
+     */
+    THROW_EXCEPTION {
+        @Override
+        public ValidationMethod validationMethod() {
+            return ValidationMethod.THROW_EXCEPTION;
+        }
+
+        @Override
+        public int validateHour(final int hour) {
+            if (isValidHour(hour)) {
+                return hour;
+            }
+            throw new IllegalArgumentException("Invalid hour, must be in [0,23] but was: " + hour);
+        }
+
+        @Override
+        public int validateMinute(final int minute) {
+            if (isValidMinute(minute)) {
+                return minute;
+            }
+            throw new IllegalArgumentException("Invalid minute, must be in [0,59] but was: " + minute);
+        }
+
+        @Override
+        public int validateSecond(final int second) {
+            if (isValidSecond(second)) {
+                return second;
+            }
+            throw new IllegalArgumentException("Invalid second, must be in [0,59] but was: " + second);
+        }
+
+        @Override
+        public int validateMilli(final int milli) {
+            if (isValidMilli(milli)) {
+                return milli;
+            }
+            throw new IllegalArgumentException("Invalid milli second, must be in [0,999] but was: " + milli);
+        }
+
+        @Override
+        public int validateMicro(final int micro) {
+            if (isValidMicro(micro)) {
+                return micro;
+            }
+            throw new IllegalArgumentException("Invalid micro second, must be in [0,999999] but was: " + micro);
+        }
+
+        @Override
+        public int validateNano(final int nano) {
+            if (isValidNano(nano)) {
+                return nano;
+            }
+            throw new IllegalArgumentException("Invalid nano second, must be in [0,999999999] but was: " + nano);
+        }
+    };
+
+    /** Special result value returned by {@link TimeValidator#INVALIDATE_RESULT} in case of invalid input values*/
+    public static final int INVALID = -1;
+    /**
+     * Special result value returned by {@link TimeValidator#INVALIDATE_RESULT} in case of valid input values for
+     * multi component validate methods such as {@link #validateTime(int, int, int)}.
+     */
+    public static final int VALID = 0;
     public static final int HOUR_MIN = 0;
     public static final int HOUR_MAX = HOURS_PER_DAY - 1;
     public static final int MINUTE_MIN = 0;
@@ -39,6 +184,19 @@ public final class TimeValidator {
     public static final int MICRO_MAX = MICROS_PER_SECOND - 1;
     public static final int NANO_MIN = 0;
     public static final int NANO_MAX = NANOS_PER_SECOND - 1;
+
+    public static TimeValidator valueOf(final ValidationMethod validationMethod) {
+        switch (validationMethod) {
+            case UNVALIDATED:
+                return UNVALIDATED;
+            case INVALIDATE_RESULT:
+                return INVALIDATE_RESULT;
+            case THROW_EXCEPTION:
+                return THROW_EXCEPTION;
+            default:
+                throw new IllegalArgumentException("Unsupported validate method: " + validationMethod);
+        }
+    }
 
     public static boolean isValidHour(final int hour) {
         return HOUR_MIN <= hour & hour <= HOUR_MAX;
@@ -64,84 +222,64 @@ public final class TimeValidator {
         return NANO_MIN <= nano & nano <= NANO_MAX;
     }
 
-    public static int checkValidHour(final int hour) {
-        if (isValidHour(hour)) {
-            return hour;
-        }
-        throw new IllegalArgumentException("Invalid hour, must be in [0,23] but was: " + hour);
+    public static boolean isValidTime(final int hour, final int minute) {
+        return isValidHour(hour) & isValidMinute(minute);
     }
 
-    public static int checkValidMinute(final int minute) {
-        if (isValidMinute(minute)) {
-            return minute;
-        }
-        throw new IllegalArgumentException("Invalid minute, must be in [0,59] but was: " + minute);
+    public static boolean isValidTime(final int hour, final int minute, final int second) {
+        return isValidTime(hour, minute) & isValidSecond(second);
     }
 
-    public static int checkValidSecond(final int second) {
-        if (isValidSecond(second)) {
-            return second;
-        }
-        throw new IllegalArgumentException("Invalid second, must be in [0,59] but was: " + second);
-    }
-
-    public static int checkValidMilli(final int milli) {
-        if (isValidMilli(milli)) {
-            return milli;
-        }
-        throw new IllegalArgumentException("Invalid milli second, must be in [0,999] but was: " + milli);
-    }
-
-    public static int checkValidMicro(final int micro) {
-        if (isValidMicro(micro)) {
-            return micro;
-        }
-        throw new IllegalArgumentException("Invalid micro second, must be in [0,999999] but was: " + micro);
-    }
-
-    public static int checkValidNano(final int nano) {
-        if (isValidNano(nano)) {
-            return nano;
-        }
-        throw new IllegalArgumentException("Invalid nano second, must be in [0,999999999] but was: " + nano);
-    }
-
-    public static void checkValidTime(final int hour, final int minute) {
-        checkValidHour(hour);
-        checkValidMinute(minute);
-    }
-
-    public static void checkValidTime(final int hour, final int minute, final int second) {
-        checkValidHour(hour);
-        checkValidMinute(minute);
-        checkValidSecond(second);
-    }
-
-    public static void checkValidTimeWithMillis(final int hour, final int minute, final int second,
+    public static boolean isValidTimeWithMillis(final int hour, final int minute, final int second,
                                                 final int milli) {
-        checkValidHour(hour);
-        checkValidMinute(minute);
-        checkValidSecond(second);
-        checkValidMilli(milli);
+        return isValidTime(hour, minute, second) & isValidMilli(milli);
     }
 
-    public static void checkValidTimeWithMicros(final int hour, final int minute, final int second,
+    public static boolean isValidTimeWithMicros(final int hour, final int minute, final int second,
                                                 final int micro) {
-        checkValidHour(hour);
-        checkValidMinute(minute);
-        checkValidSecond(second);
-        checkValidMicro(micro);
+        return isValidTime(hour, minute, second) & isValidMicro(micro);
     }
 
-    public static void checkValidTimeWithNanos(final int hour, final int minute, final int second,
+    public static boolean isValidTimeWithNanos(final int hour, final int minute, final int second,
                                                final int nano) {
-        checkValidHour(hour);
-        checkValidMinute(minute);
-        checkValidSecond(second);
-        checkValidNano(nano);
+        return isValidTime(hour, minute, second) & isValidNano(nano);
     }
 
-    private TimeValidator() {
-        throw new RuntimeException("No TimeValidator for you!");
+    abstract public ValidationMethod validationMethod();
+
+    abstract public int validateHour(int hour);
+
+    abstract public int validateMinute(int minute);
+
+    abstract public int validateSecond(int second);
+
+    abstract public int validateMilli(int milli);
+
+    abstract public int validateMicro(int micro);
+
+    abstract public int validateNano(int nano);
+
+    public int validateTime(final int hour, final int minute) {
+        return validateHour(hour) != INVALID & validateMinute(minute) != INVALID ? VALID : INVALID;
     }
+
+    public int validateTime(final int hour, final int minute, final int second) {
+        return validateTime(hour, minute) != INVALID & validateSecond(second) != INVALID ? VALID : INVALID;
+    }
+
+    public int validateTimeWithMillis(final int hour, final int minute, final int second,
+                                      final int milli) {
+        return validateTime(hour, minute, second) != INVALID & validateMilli(milli) != INVALID ? VALID : INVALID;
+    }
+
+    public int validateTimeWithMicros(final int hour, final int minute, final int second,
+                                      final int micro) {
+        return validateTime(hour, minute, second) != INVALID & validateMicro(micro) != INVALID ? VALID : INVALID;
+    }
+
+    public int validateTimeWithNanos(final int hour, final int minute, final int second,
+                                             final int nano) {
+        return validateTime(hour, minute, second) != INVALID & validateNano(nano) != INVALID ? VALID : INVALID;
+    }
+
 }
