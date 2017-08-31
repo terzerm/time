@@ -40,7 +40,7 @@ import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
  */
 public class DatePackerTest {
 
-    private static final DatePacker[] PACKERS = {DatePacker.BINARY, DatePacker.DECIMAL};
+    private static final DatePacker[] PACKERS = initPackers();
 
     @RunWith(Spockito.class)
     @Spockito.Unroll({
@@ -235,5 +235,16 @@ public class DatePackerTest {
             assertEquals(packer, DatePacker.class.getField(packing.name()).get(null));
             assertEquals(DatePacker.class.getSimpleName() + "." + packing, packer.toString());
         }
+    }
+
+    private static DatePacker[] initPackers() {
+        final DatePacker[] packers = new DatePacker[Packing.values().length * ValidationMethod.values().length];
+        int index = 0;
+        for (final Packing packing : Packing.values()) {
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                packers[index++] = DatePacker.valueOf(packing, validationMethod);
+            }
+        }
+        return packers;
     }
 }

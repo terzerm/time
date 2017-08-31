@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.tools4j.spockito.Spockito;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
@@ -34,6 +35,7 @@ import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.tools4j.time.ValidationMethod.INVALIDATE_RESULT;
 import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
 
 /**
@@ -41,7 +43,7 @@ import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
  */
 public class TimePackerTest {
 
-    private static final TimePacker[] PACKERS = {TimePacker.BINARY, TimePacker.DECIMAL};
+    private static final TimePacker[] PACKERS = initPackers();
     private static final LocalDate[] DATES = {LocalDate.of(1, 1, 1), LocalDate.of(1969, 12, 31), LocalDate.of(1970, 1,1), LocalDate.of(2017,06, 06), LocalDate.of(9999, 12, 31)};
 
     @RunWith(Spockito.class)
@@ -134,9 +136,21 @@ public class TimePackerTest {
             TimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second);
         }
 
+        @Test
+        public void packInvalidHourMinuteSecondBinary(final int hour, final int minute, final int second) {
+            final int packed = TimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).pack(hour, minute, second);
+            assertEquals("should be invalid", TimePacker.INVALID, packed);
+        }
+
         @Test(expected = IllegalArgumentException.class)
         public void packIllegalHourMinuteSecondDecimal(final int hour, final int minute, final int second) {
             TimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second);
+        }
+
+        @Test
+        public void packInvalidHourMinuteSecondDecimal(final int hour, final int minute, final int second) {
+            final int packed = TimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).pack(hour, minute, second);
+            assertEquals("should be invalid", TimePacker.INVALID, packed);
         }
 
         @Test(expected = IllegalArgumentException.class)
@@ -145,10 +159,22 @@ public class TimePackerTest {
             TimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
 
+        @Test(expected = DateTimeException.class)
+        public void unpackInvalidHourMinuteSecondBinary(final int hour, final int minute, final int second) {
+            final int packed = (hour << 12) | (minute << 6) | second;
+            TimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
+        }
+
         @Test(expected = IllegalArgumentException.class)
         public void unpackIllegalHourMinuteSecondDecimal(final int hour, final int minute, final int second) {
             final int packed = hour * 10000 + minute * 100 + second;
             TimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
+        }
+
+        @Test(expected = DateTimeException.class)
+        public void unpackInvalidHourMinuteSecondDecimal(final int hour, final int minute, final int second) {
+            final int packed = hour * 10000 + minute * 100 + second;
+            TimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
         }
     }
 
@@ -176,5 +202,16 @@ public class TimePackerTest {
             assertEquals(packer, TimePacker.class.getField(packing.name()).get(null));
             assertEquals(TimePacker.class.getSimpleName() + "." + packing, packer.toString());
         }
+    }
+
+    private static TimePacker[] initPackers() {
+        final TimePacker[] packers = new TimePacker[Packing.values().length * ValidationMethod.values().length];
+        int index = 0;
+        for (final Packing packing : Packing.values()) {
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                packers[index++] = TimePacker.valueOf(packing, validationMethod);
+            }
+        }
+        return packers;
     }
 }

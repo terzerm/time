@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.tools4j.spockito.Spockito;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
@@ -34,6 +35,7 @@ import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.tools4j.time.ValidationMethod.INVALIDATE_RESULT;
 import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
 
 /**
@@ -41,7 +43,7 @@ import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
  */
 public class MilliTimePackerTest {
 
-    private static final MilliTimePacker[] PACKERS = {MilliTimePacker.BINARY, MilliTimePacker.DECIMAL};
+    private static final MilliTimePacker[] PACKERS = initPackers();
     private static final LocalDate[] DATES = {LocalDate.of(1, 1, 1), LocalDate.of(1969, 12, 31), LocalDate.of(1970, 1,1), LocalDate.of(2017,06, 06), LocalDate.of(9999, 12, 31)};
 
     @RunWith(Spockito.class)
@@ -127,9 +129,21 @@ public class MilliTimePackerTest {
             MilliTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second, milli);
         }
 
+        @Test
+        public void packInvalidHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int milli) {
+            final int packed = MilliTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).pack(hour, minute, second, milli);
+            assertEquals("should be invalid", MilliTimePacker.INVALID, packed);
+        }
+
         @Test(expected = IllegalArgumentException.class)
         public void packIllegalHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
             MilliTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second, milli);
+        }
+
+        @Test
+        public void packInvalidHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
+            final int packed = MilliTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).pack(hour, minute, second, milli);
+            assertEquals("should be invalid", MilliTimePacker.INVALID, packed);
         }
 
         @Test(expected = IllegalArgumentException.class)
@@ -138,10 +152,22 @@ public class MilliTimePackerTest {
             MilliTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
 
+        @Test(expected = DateTimeException.class)
+        public void unpackInvalidHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int milli) {
+            final int packed = (hour << 22) | (minute << 16) | (second << 10) | milli;
+            MilliTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
+        }
+
         @Test(expected = IllegalArgumentException.class)
         public void unpackIllegalHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
             final int packed = hour * 10000000 + minute * 100000 + second * 1000 + milli;
             MilliTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
+        }
+
+        @Test(expected = DateTimeException.class)
+        public void unpackInvalidHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
+            final int packed = hour * 10000000 + minute * 100000 + second * 1000 + milli;
+            MilliTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
         }
     }
 
@@ -169,5 +195,16 @@ public class MilliTimePackerTest {
             assertEquals(packer, MilliTimePacker.class.getField(packing.name()).get(null));
             assertEquals(MilliTimePacker.class.getSimpleName() + "." + packing, packer.toString());
         }
+    }
+
+    private static MilliTimePacker[] initPackers() {
+        final MilliTimePacker[] packers = new MilliTimePacker[Packing.values().length * ValidationMethod.values().length];
+        int index = 0;
+        for (final Packing packing : Packing.values()) {
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                packers[index++] = MilliTimePacker.valueOf(packing, validationMethod);
+            }
+        }
+        return packers;
     }
 }

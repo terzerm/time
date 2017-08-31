@@ -27,14 +27,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.tools4j.spockito.Spockito;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.tools4j.time.ValidationMethod.INVALIDATE_RESULT;
 import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
 
 /**
@@ -42,7 +40,7 @@ import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
  */
 public class NanoTimePackerTest {
 
-    private static final NanoTimePacker[] PACKERS = {NanoTimePacker.BINARY, NanoTimePacker.DECIMAL};
+    private static final NanoTimePacker[] PACKERS = initPackers();
     private static final LocalDate[] DATES = {LocalDate.of(1931, 1, 1), LocalDate.of(1969, 12, 31), LocalDate.of(1970, 1,1), LocalDate.of(2017,06, 06), LocalDate.of(2036, 12, 31)};
 
     @RunWith(Spockito.class)
@@ -143,9 +141,21 @@ public class NanoTimePackerTest {
             NanoTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second, nano);
         }
 
+        @Test
+        public void packInvalidHourMinuteSecondNanoBinary(final int hour, final int minute, final int second, final int nano) {
+            final long packed = NanoTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).pack(hour, minute, second, nano);
+            assertEquals("should be invalid", NanoTimePacker.INVALID, packed);
+        }
+
         @Test(expected = IllegalArgumentException.class)
         public void packIllegalHourMinuteSecondNanoDecimal(final int hour, final int minute, final int second, final int nano) {
             NanoTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second, nano);
+        }
+
+        @Test
+        public void packInvalidHourMinuteSecondNanoDecimal(final int hour, final int minute, final int second, final int nano) {
+            final long packed = NanoTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).pack(hour, minute, second, nano);
+            assertEquals("should be invalid", NanoTimePacker.INVALID, packed);
         }
 
         @Test(expected = IllegalArgumentException.class)
@@ -154,10 +164,22 @@ public class NanoTimePackerTest {
             NanoTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
 
+        @Test(expected = DateTimeException.class)
+        public void unpackInvalidHourMinuteSecondNanoBinary(final int hour, final int minute, final int second, final int nano) {
+            final long packed = (((long)hour) << 42) | (((long)minute) << 36) | (((long)second) << 30) | nano;
+            NanoTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
+        }
+
         @Test(expected = IllegalArgumentException.class)
         public void unpackIllegalHourMinuteSecondNanoDecimal(final int hour, final int minute, final int second, final int nano) {
             final long packed = hour * 10000000000000L + minute * 100000000000L + second * 1000000000L + nano;
             NanoTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
+        }
+
+        @Test(expected = DateTimeException.class)
+        public void unpackInvalidHourMinuteSecondNanoDecimal(final int hour, final int minute, final int second, final int nano) {
+            final long packed = hour * 10000000000000L + minute * 100000000000L + second * 1000000000L + nano;
+            NanoTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
         }
     }
 
@@ -185,5 +207,16 @@ public class NanoTimePackerTest {
             assertEquals(packer, NanoTimePacker.class.getField(packing.name()).get(null));
             assertEquals(NanoTimePacker.class.getSimpleName() + "." + packing, packer.toString());
         }
+    }
+
+    private static NanoTimePacker[] initPackers() {
+        final NanoTimePacker[] packers = new NanoTimePacker[Packing.values().length * ValidationMethod.values().length];
+        int index = 0;
+        for (final Packing packing : Packing.values()) {
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                packers[index++] = NanoTimePacker.valueOf(packing, validationMethod);
+            }
+        }
+        return packers;
     }
 }
