@@ -24,12 +24,12 @@
 package org.tools4j.time.base;
 
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
 public class FrequencyLimiter {
 
-    private final static long DEFAULT_RESET_TIME_NANOS = TimeUnit.SECONDS.toNanos(1);
+    private static final long SECOND_IN_NANOS = 1_000_000_000;
+    private final static long DEFAULT_RESET_TIME_NANOS = SECOND_IN_NANOS;
 
     private final long resetTimeNanos;
     private final BooleanSupplier invokable;
@@ -44,7 +44,7 @@ public class FrequencyLimiter {
             throw new IllegalArgumentException("maxInvocationsPerSecond must be positive: " + maxInvocationsPerSecond);
         }
         this.invokable = Objects.requireNonNull(invokable);
-        this.nanosPerRun = 1e9 / maxInvocationsPerSecond;
+        this.nanosPerRun = SECOND_IN_NANOS / maxInvocationsPerSecond;
         this.resetTimeNanos = Math.max((long)Math.ceil(nanosPerRun), DEFAULT_RESET_TIME_NANOS);
         this.action = this::initialRun;
     }
