@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.tools4j.spockito.Spockito;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -156,7 +157,7 @@ public class DatePackerTest {
     })
     @Spockito.Name("[{row}]: {year}/{month}/{day}")
     public static class Invalid {
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void packIllegalYearMonthDayBinary(final int year, final int month, final int day) {
             DatePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(year, month, day);
         }
@@ -167,7 +168,7 @@ public class DatePackerTest {
             assertEquals("should be invalid", DatePacker.INVALID, packed);
         }
 
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void packIllegalYearMonthDayDecimal(final int year, final int month, final int day) {
             DatePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(year, month, day);
         }
@@ -178,7 +179,7 @@ public class DatePackerTest {
             assertEquals("should be invalid", DatePacker.INVALID, packed);
         }
 
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void unpackIllegalYearMonthDayBinary(final int year, final int month, final int day) {
             final int packed = DatePacker.BINARY.pack(year, month, day);
             DatePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackDay(packed);
@@ -192,7 +193,7 @@ public class DatePackerTest {
             assertEquals("should be invalid", DatePacker.INVALID, invalid);
         }
 
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void unpackIllegalYearMonthDayDecimal(final int year, final int month, final int day) {
             final int packed = DatePacker.DECIMAL.pack(year, month, day);
             DatePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackDay(packed);

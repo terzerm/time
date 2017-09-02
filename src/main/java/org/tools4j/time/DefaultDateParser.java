@@ -25,7 +25,7 @@ package org.tools4j.time;
 
 import java.util.Objects;
 
-public final class DefaultDateParser implements DateParser.Default {
+final class DefaultDateParser implements DateParser.Default {
 
     private final DateFormat format;
 
@@ -34,8 +34,13 @@ public final class DefaultDateParser implements DateParser.Default {
     }
 
     @Override
-    public DateFormat getFormat() {
+    public DateFormat format() {
         return format;
+    }
+
+    @Override
+    public ValidationMethod validationMethod() {
+        return ValidationMethod.UNVALIDATED;
     }
 
     @Override
@@ -79,7 +84,7 @@ public final class DefaultDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> int toPacked(final S source, final CharReader<? super S> reader, final int offset, final DatePacker packer) {
+    public <S> int toPacked(final S source, final CharReader<? super S> reader, final int offset, final Packing packer) {
         return 0;
     }
 

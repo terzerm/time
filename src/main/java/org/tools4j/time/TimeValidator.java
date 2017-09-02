@@ -23,6 +23,8 @@
  */
 package org.tools4j.time;
 
+import java.time.DateTimeException;
+
 import static org.tools4j.time.TimeFactors.*;
 
 /**
@@ -108,7 +110,7 @@ public enum TimeValidator {
         }
     },
     /**
-     * Date validation is performed and failure is signalled through an {@link IllegalArgumentException}.
+     * Date validation is performed and failure is signalled through an {@link DateTimeException}.
      */
     THROW_EXCEPTION {
         @Override
@@ -121,7 +123,7 @@ public enum TimeValidator {
             if (isValidHour(hour)) {
                 return hour;
             }
-            throw new IllegalArgumentException("Invalid hour, must be in [0,23] but was: " + hour);
+            throw new DateTimeException("Invalid hour, must be in [0,23] but was: " + hour);
         }
 
         @Override
@@ -129,7 +131,7 @@ public enum TimeValidator {
             if (isValidMinute(minute)) {
                 return minute;
             }
-            throw new IllegalArgumentException("Invalid minute, must be in [0,59] but was: " + minute);
+            throw new DateTimeException("Invalid minute, must be in [0,59] but was: " + minute);
         }
 
         @Override
@@ -137,7 +139,7 @@ public enum TimeValidator {
             if (isValidSecond(second)) {
                 return second;
             }
-            throw new IllegalArgumentException("Invalid second, must be in [0,59] but was: " + second);
+            throw new DateTimeException("Invalid second, must be in [0,59] but was: " + second);
         }
 
         @Override
@@ -145,7 +147,7 @@ public enum TimeValidator {
             if (isValidMilli(milli)) {
                 return milli;
             }
-            throw new IllegalArgumentException("Invalid milli second, must be in [0,999] but was: " + milli);
+            throw new DateTimeException("Invalid milli second, must be in [0,999] but was: " + milli);
         }
 
         @Override
@@ -153,7 +155,7 @@ public enum TimeValidator {
             if (isValidMicro(micro)) {
                 return micro;
             }
-            throw new IllegalArgumentException("Invalid micro second, must be in [0,999999] but was: " + micro);
+            throw new DateTimeException("Invalid micro second, must be in [0,999999] but was: " + micro);
         }
 
         @Override
@@ -161,7 +163,7 @@ public enum TimeValidator {
             if (isValidNano(nano)) {
                 return nano;
             }
-            throw new IllegalArgumentException("Invalid nano second, must be in [0,999999999] but was: " + nano);
+            throw new DateTimeException("Invalid nano second, must be in [0,999999999] but was: " + nano);
         }
     };
 

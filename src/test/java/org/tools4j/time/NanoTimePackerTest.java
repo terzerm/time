@@ -136,7 +136,7 @@ public class NanoTimePackerTest {
     })
     @Spockito.Name("[{row}]: {hour}:{minute}:{second}.{nano}")
     public static class Invalid {
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void packIllegalHourMinuteSecondNanoBinary(final int hour, final int minute, final int second, final int nano) {
             NanoTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second, nano);
         }
@@ -147,7 +147,7 @@ public class NanoTimePackerTest {
             assertEquals("should be invalid", NanoTimePacker.INVALID, packed);
         }
 
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void packIllegalHourMinuteSecondNanoDecimal(final int hour, final int minute, final int second, final int nano) {
             NanoTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second, nano);
         }
@@ -158,7 +158,7 @@ public class NanoTimePackerTest {
             assertEquals("should be invalid", NanoTimePacker.INVALID, packed);
         }
 
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void unpackIllegalHourMinuteSecondNanoBinary(final int hour, final int minute, final int second, final int nano) {
             final long packed = (((long)hour) << 42) | (((long)minute) << 36) | (((long)second) << 30) | nano;
             NanoTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
@@ -170,7 +170,7 @@ public class NanoTimePackerTest {
             NanoTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
         }
 
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void unpackIllegalHourMinuteSecondNanoDecimal(final int hour, final int minute, final int second, final int nano) {
             final long packed = hour * 10000000000000L + minute * 100000000000L + second * 1000000000L + nano;
             NanoTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);

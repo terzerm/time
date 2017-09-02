@@ -131,7 +131,7 @@ public class TimePackerTest {
     })
     @Spockito.Name("[{row}]: {hour}:{minute}:{second}")
     public static class Invalid {
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void packIllegalHourMinuteSecondBinary(final int hour, final int minute, final int second) {
             TimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second);
         }
@@ -142,7 +142,7 @@ public class TimePackerTest {
             assertEquals("should be invalid", TimePacker.INVALID, packed);
         }
 
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void packIllegalHourMinuteSecondDecimal(final int hour, final int minute, final int second) {
             TimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second);
         }
@@ -153,7 +153,7 @@ public class TimePackerTest {
             assertEquals("should be invalid", TimePacker.INVALID, packed);
         }
 
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void unpackIllegalHourMinuteSecondBinary(final int hour, final int minute, final int second) {
             final int packed = (hour << 12) | (minute << 6) | second;
             TimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
@@ -165,7 +165,7 @@ public class TimePackerTest {
             TimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
         }
 
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void unpackIllegalHourMinuteSecondDecimal(final int hour, final int minute, final int second) {
             final int packed = hour * 10000 + minute * 100 + second;
             TimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);

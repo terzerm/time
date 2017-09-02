@@ -23,6 +23,8 @@
  */
 package org.tools4j.time;
 
+import java.time.DateTimeException;
+
 /**
  * Defines validators for date components.
  */
@@ -76,7 +78,7 @@ public enum DateValidator {
         }
     },
     /**
-     * Date validation is performed and failure is signalled through an {@link IllegalArgumentException}.
+     * Date validation is performed and failure is signalled through an {@link DateTimeException}.
      */
     THROW_EXCEPTION {
         @Override
@@ -89,7 +91,7 @@ public enum DateValidator {
             if (DateValidator.isValidYear(year)) {
                 return year;
             }
-            throw new IllegalArgumentException("Invalid year, must be in [1,9999] but was: " + year);
+            throw new DateTimeException("Invalid year, must be in [1,9999] but was: " + year);
         }
 
         @Override
@@ -97,7 +99,7 @@ public enum DateValidator {
             if (DateValidator.isValidMonth(month)) {
                 return month;
             }
-            throw new IllegalArgumentException("Invalid month, must be in [1,12] but was: " + month);
+            throw new DateTimeException("Invalid month, must be in [1,12] but was: " + month);
         }
 
         @Override
@@ -107,12 +109,13 @@ public enum DateValidator {
             if (isValidDay(year, month, day)) {
                 return day;
             }
-            throw new IllegalArgumentException("Invalid day in date: " + year + "-" + month + "-" + day);
+            throw new DateTimeException("Invalid day in date: " + year + "-" + month + "-" + day);
         }
     };
 
     /** Special result value returned by {@link DateValidator#INVALIDATE_RESULT} in case of invalid input values*/
     public static final int INVALID = -1;
+    public static final long INVALID_EPOCH = Long.MIN_VALUE;
     public static final int YEAR_MIN = 1;
     public static final int YEAR_MAX = 9999;
     public static final int MONTH_MIN = 1;

@@ -124,7 +124,7 @@ public class MilliTimePackerTest {
     })
     @Spockito.Name("[{row}]: {hour}:{minute}:{second}.{milli}")
     public static class Invalid {
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void packIllegalHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int milli) {
             MilliTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second, milli);
         }
@@ -135,7 +135,7 @@ public class MilliTimePackerTest {
             assertEquals("should be invalid", MilliTimePacker.INVALID, packed);
         }
 
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void packIllegalHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
             MilliTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(hour, minute, second, milli);
         }
@@ -146,7 +146,7 @@ public class MilliTimePackerTest {
             assertEquals("should be invalid", MilliTimePacker.INVALID, packed);
         }
 
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void unpackIllegalHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int milli) {
             final int packed = (hour << 22) | (minute << 16) | (second << 10) | milli;
             MilliTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
@@ -158,7 +158,7 @@ public class MilliTimePackerTest {
             MilliTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
         }
 
-        @Test(expected = IllegalArgumentException.class)
+        @Test(expected = DateTimeException.class)
         public void unpackIllegalHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
             final int packed = hour * 10000000 + minute * 100000 + second * 1000 + milli;
             MilliTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);

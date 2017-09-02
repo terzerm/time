@@ -24,13 +24,13 @@
 package org.tools4j.time;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 public interface DateParser {
-    int INVALID = -1;
-    long INVALID_EPOCH = Long.MIN_VALUE;
-    LocalDate INVALID_LOCAL_DATE = null;
-
-    DateFormat getFormat();
+    int INVALID = DateValidator.INVALID;
+    long INVALID_EPOCH = DateValidator.INVALID_EPOCH;
+    DateFormat format();
+    ValidationMethod validationMethod();
     int toYear(CharSequence charSequence);
     int toYear(CharSequence charSequence, int offset);
     <S> int toYear(S source, CharReader<? super S> reader);
@@ -43,10 +43,10 @@ public interface DateParser {
     int toDay(CharSequence charSequence, int offset);
     <S> int toDay(S source, CharReader<? super S> reader);
     <S> int toDay(S source, CharReader<? super S> reader, int offset);
-    int toPacked(CharSequence charSequence, DatePacker packer);
-    int toPacked(CharSequence charSequence, int offset, DatePacker packer);
-    <S> int toPacked(S source, CharReader<? super S> reader, DatePacker packer);
-    <S> int toPacked(S source, CharReader<? super S> reader, int offset, DatePacker packer);
+    int toPacked(CharSequence charSequence, Packing packing);
+    int toPacked(CharSequence charSequence, int offset, Packing packing);
+    <S> int toPacked(S source, CharReader<? super S> reader, Packing packing);
+    <S> int toPacked(S source, CharReader<? super S> reader, int offset, Packing packing);
     long toEpochDays(CharSequence charSequence);
     long toEpochDays(CharSequence charSequence, int offset);
     <S> long toEpochDays(S source, CharReader<? super S> reader);
@@ -78,11 +78,6 @@ public interface DateParser {
             return toYear(source, reader, 0);
         }
         @Override
-        default <S> int toYear(final S source, final CharReader<? super S> reader, final int offset) {
-            final int packed = toPacked(source, reader, offset, DatePacker.BINARY);
-            return DatePacker.BINARY.unpackYear(packed);
-        }
-        @Override
         default int toMonth(final CharSequence charSequence) {
             return toMonth(charSequence, CharReader.CHAR_SEQUENCE);
         }
@@ -93,11 +88,6 @@ public interface DateParser {
         @Override
         default <S> int toMonth(final S source, final CharReader<? super S> reader) {
             return toMonth(source, reader, 0);
-        }
-        @Override
-        default <S> int toMonth(final S source, final CharReader<? super S> reader, final int offset) {
-            final int packed = toPacked(source, reader, offset, DatePacker.BINARY);
-            return DatePacker.BINARY.unpackMonth(packed);
         }
         @Override
         default int toDay(final CharSequence charSequence) {
@@ -112,28 +102,23 @@ public interface DateParser {
             return toDay(source, reader, 0);
         }
         @Override
-        default <S> int toDay(final S source, final CharReader<? super S> reader, final int offset) {
-            final int packed = toPacked(source, reader, offset, DatePacker.BINARY);
-            return DatePacker.BINARY.unpackDay(packed);
+        default int toPacked(final CharSequence charSequence, final Packing packing) {
+            return toPacked(charSequence, CharReader.CHAR_SEQUENCE, packing);
         }
         @Override
-        default int toPacked(final CharSequence charSequence, final DatePacker packer) {
-            return toPacked(charSequence, CharReader.CHAR_SEQUENCE, packer);
+        default int toPacked(final CharSequence charSequence, final int offset, final Packing packing) {
+            return toPacked(charSequence, CharReader.CHAR_SEQUENCE, offset, packing);
         }
         @Override
-        default int toPacked(final CharSequence charSequence, final int offset, final DatePacker packer) {
-            return toPacked(charSequence, CharReader.CHAR_SEQUENCE, offset, packer);
+        default <S> int toPacked(final S source, final CharReader<? super S> reader, final Packing packing) {
+            return toPacked(source, reader, 0, packing);
         }
         @Override
-        default <S> int toPacked(final S source, final CharReader<? super S> reader, final DatePacker packer) {
-            return toPacked(source, reader, 0, packer);
-        }
-        @Override
-        default <S> int toPacked(final S source, final CharReader<? super S> reader, final int offset, final DatePacker packer) {
+        default <S> int toPacked(final S source, final CharReader<? super S> reader, final int offset, final Packing packing) {
             final int year = toYear(source, reader, offset);
             final int month = toMonth(source, reader, offset);
             final int day = toDay(source, reader, offset);
-            return packer.pack(year, month, day);
+            return DatePacker.valueOf(packing).pack(year, month, day);
         }
         @Override
         default long toEpochDays(final CharSequence charSequence) {
@@ -182,12 +167,78 @@ public interface DateParser {
         default <S> LocalDate toLocalDate(final S source, final CharReader<? super S> reader) {
             return toLocalDate(source, reader, 0);
         }
+        @Garbage(Garbage.Type.RESULT)
         @Override
         default <S> LocalDate toLocalDate(final S source, final CharReader<? super S> reader, final int offset) {
             final int year = toYear(source, reader, offset);
             final int month = toMonth(source, reader, offset);
             final int day = toDay(source, reader, offset);
+            DateValidator.THROW_EXCEPTION.validateDay(year, month, day);
             return LocalDate.of(year, month, day);
+        }
+    }
+
+    class Validated implements Default {
+        private final DateParser parser;
+        private final DateValidator validator;
+
+        public Validated(final DateParser parser, final ValidationMethod validationMethod) {
+            this(parser, DateValidator.valueOf(validationMethod));
+        }
+
+        public Validated(final DateParser parser, final DateValidator validator) {
+            this.parser = Objects.requireNonNull(parser);
+            this.validator = Objects.requireNonNull(validator);
+        }
+
+        @Override
+        public DateFormat format() {
+            return parser.format();
+        }
+
+        @Override
+        public ValidationMethod validationMethod() {
+            return validator.validationMethod();
+        }
+
+        @Override
+        public <S> int toYear(final S source, final CharReader<? super S> reader, final int offset) {
+            return validator.validateYear(parser.toYear(source, reader, offset));
+        }
+
+        @Override
+        public <S> int toMonth(final S source, final CharReader<? super S> reader, final int offset) {
+            return validator.validateMonth(parser.toMonth(source, reader, offset));
+        }
+
+        @Override
+        public <S> int toDay(final S source, final CharReader<? super S> reader, final int offset) {
+            final int year = parser.toYear(source, reader, offset);
+            final int month = parser.toMonth(source, reader, offset);
+            final int day = parser.toDay(source, reader, offset);
+            return validator.validateDay(year, month, day);
+        }
+
+        @Override
+        public <S> int toPacked(final S source, final CharReader<? super S> reader, final int offset, final Packing packing) {
+            final int year = parser.toYear(source, reader, offset);
+            final int month = parser.toMonth(source, reader, offset);
+            final int day = parser.toDay(source, reader, offset);
+            if (validator.validateDay(year, month, day) != DateValidator.INVALID) {
+                return DatePacker.valueOf(packing).pack(year, month, day);
+            }
+            return INVALID;
+        }
+
+        @Override
+        public <S> long toEpochDays(final S source, final CharReader<? super S> reader, final int offset) {
+            final int year = parser.toYear(source, reader, offset);
+            final int month = parser.toMonth(source, reader, offset);
+            final int day = parser.toDay(source, reader, offset);
+            if (validator.validateDay(year, month, day) != DateValidator.INVALID) {
+                return Epoch.toEpochDays(year, month, day);
+            }
+            return INVALID_EPOCH;
         }
     }
 }
