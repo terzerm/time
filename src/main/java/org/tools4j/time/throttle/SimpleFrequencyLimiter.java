@@ -21,15 +21,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.tools4j.time.base;
+package org.tools4j.time.throttle;
+
+import org.tools4j.time.base.TimeFactors;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
-public class FrequencyLimiter {
+public class SimpleFrequencyLimiter {
 
-    private static final long SECOND_IN_NANOS = 1_000_000_000;
-    private final static long DEFAULT_RESET_TIME_NANOS = SECOND_IN_NANOS;
+    private final static long DEFAULT_RESET_TIME_NANOS = TimeUnit.SECONDS.toNanos(1);
 
     private final long resetTimeNanos;
     private final BooleanSupplier invokable;
@@ -39,12 +41,12 @@ public class FrequencyLimiter {
     private long lastCheckTimeNanos;
     private long countSinceLastCheck;
 
-    private FrequencyLimiter(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
+    private SimpleFrequencyLimiter(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
         if (maxInvocationsPerSecond <= 0) {
             throw new IllegalArgumentException("maxInvocationsPerSecond must be positive: " + maxInvocationsPerSecond);
         }
         this.invokable = Objects.requireNonNull(invokable);
-        this.nanosPerRun = SECOND_IN_NANOS / maxInvocationsPerSecond;
+        this.nanosPerRun = TimeFactors.NANOS_PER_SECOND / maxInvocationsPerSecond;
         this.resetTimeNanos = Math.max((long)Math.ceil(nanosPerRun), DEFAULT_RESET_TIME_NANOS);
         this.action = this::initialRun;
     }
@@ -58,7 +60,7 @@ public class FrequencyLimiter {
     }
 
     public static BooleanSupplier forBooleanSupplier(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
-        final FrequencyLimiter lim = new FrequencyLimiter(invokable, maxInvocationsPerSecond);
+        final SimpleFrequencyLimiter lim = new SimpleFrequencyLimiter(invokable, maxInvocationsPerSecond);
         return () -> lim.action.getAsBoolean();
     }
 

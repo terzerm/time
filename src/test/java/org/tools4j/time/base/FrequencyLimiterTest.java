@@ -26,6 +26,8 @@ package org.tools4j.time.base;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.tools4j.spockito.Spockito;
+import org.tools4j.time.throttle.SimpleFrequencyLimiter;
+import org.tools4j.time.throttle.SlidingWindowFrequencyLimiter;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,7 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Unit test for {@link FrequencyLimiter}
+ * Unit test for {@link SlidingWindowFrequencyLimiter}
  */
 @RunWith(Spockito.class)
 @Spockito.Unroll({
@@ -60,19 +62,39 @@ import static org.junit.Assert.assertTrue;
 })
 public class FrequencyLimiterTest {
 
+    interface Constructor<T> {
+        T create(T task, double maxUpdatesPerSecond);
+    }
+
     @Test
-    public void forRunnable(final double updatesPerSecond, final int runningTimeSeconds) throws Exception {
+    public void simple_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
+        runnable(SimpleFrequencyLimiter::forRunnable, updatesPerSecond, runningTimeSeconds);
+    }
+    @Test
+    public void slidingWindow_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
+        runnable(SlidingWindowFrequencyLimiter::forRunnable, updatesPerSecond, runningTimeSeconds);
+    }
+    private void runnable(final Constructor<Runnable> constructor,
+                          final double updatesPerSecond, final int runningTimeSeconds) {
         final AtomicLong counter = new AtomicLong();
-        final Runnable runnable = FrequencyLimiter.forRunnable(counter::incrementAndGet, updatesPerSecond);
+        final Runnable runnable = constructor.create(counter::incrementAndGet, updatesPerSecond);
         runTest(counter, runnable, updatesPerSecond, runningTimeSeconds);
     }
 
     @Test
-    public void forBooleanSupplier(final double updatesPerSecond, final int runningTimeSeconds) throws Exception {
+    public void simple_booleanSupplier(final double updatesPerSecond, final int runningTimeSeconds) {
+        booleanSupplier(SimpleFrequencyLimiter::forBooleanSupplier, updatesPerSecond, runningTimeSeconds);
+    }
+    @Test
+    public void slidingWindow_booleanSupplier(final double updatesPerSecond, final int runningTimeSeconds) {
+        booleanSupplier(SlidingWindowFrequencyLimiter::forBooleanSupplier, updatesPerSecond, runningTimeSeconds);
+    }
+    public void booleanSupplier(final Constructor<BooleanSupplier> constructor,
+                                final double updatesPerSecond, final int runningTimeSeconds) {
         final AtomicBoolean toggler = new AtomicBoolean();
         final AtomicLong allCounter = new AtomicLong();
         final AtomicLong counter = new AtomicLong();
-        final BooleanSupplier supplier = FrequencyLimiter.forBooleanSupplier(() -> {
+        final BooleanSupplier supplier = constructor.create(() -> {
             allCounter.incrementAndGet();
             if (toggler.getAndSet(!toggler.get())) {
                 counter.incrementAndGet();
@@ -99,20 +121,22 @@ public class FrequencyLimiterTest {
                          final double updatesPerSecond, final int runningTimeSeconds) {
         final long runningTimeMillis = TimeUnit.SECONDS.toMillis(runningTimeSeconds);
         final long startTimeMillis = System.currentTimeMillis();
-        long lastSecondCount = 0;
-        long lastSecondTimeMillis = startTimeMillis;
+        long lastCount = 0;
+        long lastTimeMillis = startTimeMillis;
         for (int i = 0; i < Integer.MAX_VALUE; i++) {
             runnable.run();
             if ((i & 0xff) == 0) {
                 final long timeMillis = System.currentTimeMillis();
-                if (timeMillis - lastSecondTimeMillis >= 1000) {
+                if (timeMillis - lastTimeMillis >= 500) {
                     final String time = "time=" + (timeMillis - startTimeMillis) + "ms";
-                    final long deltaCount = counter.get() - lastSecondCount;
-                    lastSecondCount = counter.get();
-                    lastSecondTimeMillis = timeMillis;
+                    final long deltaCount = counter.get() - lastCount;
+                    final long deltaMillis = timeMillis - lastTimeMillis;
+                    lastCount = counter.get();
+                    lastTimeMillis = timeMillis;
                     System.out.println(time + ": counter=" + counter + ", increment=" + deltaCount);
-                    assertTrue(time + ": + " + deltaCount + " should be within 1% of " + updatesPerSecond,
-                            Math.abs(updatesPerSecond - deltaCount) <= (1 + updatesPerSecond/100));
+                    final double updatesPerDeltaTime = updatesPerSecond * deltaMillis / 1000;
+                    assertTrue(time + ": " + deltaCount + " should be within 1% of " + updatesPerDeltaTime,
+                            Math.abs(updatesPerDeltaTime - deltaCount) <= (1 + updatesPerDeltaTime/100));
                 }
                 if (timeMillis - startTimeMillis >= runningTimeMillis) {
                     return;
