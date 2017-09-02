@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
-public class FrequencyLimitter {
+public class FrequencyLimiter {
 
     private final long resetTimeNanos = TimeUnit.SECONDS.toNanos(1);
     private final BooleanSupplier invokable;
@@ -37,7 +37,7 @@ public class FrequencyLimitter {
     private long lastCheckTimeNanos;
     private long countSinceLastCheck;
 
-    private FrequencyLimitter(final BooleanSupplier invokable, final int maxInvocationsPerSecond) {
+    private FrequencyLimiter(final BooleanSupplier invokable, final int maxInvocationsPerSecond) {
         if (maxInvocationsPerSecond <= 0) {
             throw new IllegalArgumentException("maxInvocationsPerSecond must be positive: " + maxInvocationsPerSecond);
         }
@@ -55,7 +55,7 @@ public class FrequencyLimitter {
     }
 
     public static BooleanSupplier forBooleanSupplier(final BooleanSupplier invokable, final int maxInvocationsPerSecond) {
-        final FrequencyLimitter lim = new FrequencyLimitter(invokable, maxInvocationsPerSecond);
+        final FrequencyLimiter lim = new FrequencyLimiter(invokable, maxInvocationsPerSecond);
         return () -> lim.action.getAsBoolean();
     }
 

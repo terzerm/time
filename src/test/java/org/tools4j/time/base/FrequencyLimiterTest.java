@@ -36,7 +36,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Unit test for {@link FrequencyLimitter}
+ * Unit test for {@link FrequencyLimiter}
  */
 @RunWith(Spockito.class)
 @Spockito.Unroll({
@@ -56,14 +56,14 @@ import static org.junit.Assert.assertTrue;
 //        "|      500000    |",
         "|     1000000    |",
 })
-public class FrequencyLimitterTest {
+public class FrequencyLimiterTest {
 
     private static final long RUNNING_TIME_MILLIS = TimeUnit.SECONDS.toMillis(3);
 
     @Test
     public void forRunnable(final int updatesPerSecond) throws Exception {
         final AtomicLong counter = new AtomicLong();
-        final Runnable runnable = FrequencyLimitter.forRunnable(counter::incrementAndGet, updatesPerSecond);
+        final Runnable runnable = FrequencyLimiter.forRunnable(counter::incrementAndGet, updatesPerSecond);
         runTest(counter, runnable, updatesPerSecond);
     }
 
@@ -72,7 +72,7 @@ public class FrequencyLimitterTest {
         final AtomicBoolean toggler = new AtomicBoolean();
         final AtomicLong allCounter = new AtomicLong();
         final AtomicLong counter = new AtomicLong();
-        final BooleanSupplier supplier = FrequencyLimitter.forBooleanSupplier(() -> {
+        final BooleanSupplier supplier = FrequencyLimiter.forBooleanSupplier(() -> {
             allCounter.incrementAndGet();
             if (toggler.getAndSet(!toggler.get())) {
                 counter.incrementAndGet();
