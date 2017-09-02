@@ -21,25 +21,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.tools4j.time;
+package org.tools4j.time.pack;
 
-import java.lang.annotation.*;
+import java.util.function.Consumer;
 
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface Garbage {
-    Type value();
-    enum Type {
-        /**
-         * Indicates that only the result value returned by a method is allocated and no other
-         * garbage is created by invoking the method.
-         */
-        RESULT,
-        /**
-         * Indicates that any type of objects may be allocated when a method is called, including
-         * temporary objects.
-         */
-        ANY;
+/**
+ * Defines different methods to pack multiple values into an integer value.
+ */
+public enum Packing {
+    /**
+     * The packing is performed by shifting the components to particular positions of an int or long value.
+     * <p>
+     * This packing method is more efficient than {@link #DECIMAL} but is usually not human readable.
+     */
+    BINARY,
+    /**
+     * The packing is performed by multiplying the components with powers of ten and then adding those multiples.
+     * <p>
+     * This packing method is less efficient than {@link #BINARY} but is usually human readable, for instance packing
+     * th date 30st April 1979 as 19790430.
+     */
+    DECIMAL;
+
+    private static Packing[] VALUES = values();
+
+    public static final int length() {
+        return VALUES.length;
+    }
+
+    public static final Packing valueByOrdinal(final int ordinal) {
+        return VALUES[ordinal];
+    }
+
+    public static final void forEach(final Consumer<? super Packing> consumer) {
+        for (final Packing packing : VALUES) {
+            consumer.accept(packing);
+        }
     }
 }

@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.tools4j.time;
+package org.tools4j.time.format;
 
 /**
  * Constants for common time formats of fixed length. The format defines the ordering

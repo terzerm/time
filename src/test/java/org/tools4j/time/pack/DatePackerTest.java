@@ -21,11 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.tools4j.time;
+package org.tools4j.time.pack;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.tools4j.spockito.Spockito;
+import org.tools4j.time.pack.DatePacker;
+import org.tools4j.time.pack.Packing;
+import org.tools4j.time.validate.ValidationMethod;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -33,8 +36,8 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.*;
-import static org.tools4j.time.ValidationMethod.INVALIDATE_RESULT;
-import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
+import static org.tools4j.time.validate.ValidationMethod.INVALIDATE_RESULT;
+import static org.tools4j.time.validate.ValidationMethod.THROW_EXCEPTION;
 
 /**
  * Unit test for {@link DatePacker}.

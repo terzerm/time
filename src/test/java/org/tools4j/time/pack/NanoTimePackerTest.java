@@ -21,19 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.tools4j.time;
+package org.tools4j.time.pack;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.tools4j.spockito.Spockito;
+import org.tools4j.time.base.TimeFactors;
+import org.tools4j.time.pack.NanoTimePacker;
+import org.tools4j.time.pack.Packing;
+import org.tools4j.time.validate.ValidationMethod;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.tools4j.time.ValidationMethod.INVALIDATE_RESULT;
-import static org.tools4j.time.ValidationMethod.THROW_EXCEPTION;
+import static org.tools4j.time.validate.ValidationMethod.INVALIDATE_RESULT;
+import static org.tools4j.time.validate.ValidationMethod.THROW_EXCEPTION;
 
 /**
  * Unit test for {@link NanoTimePacker}.

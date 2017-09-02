@@ -21,41 +21,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.tools4j.time;
+package org.tools4j.time.format;
 
-import java.util.function.Consumer;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 
-/**
- * Defines different methods to pack multiple values into an integer value.
- */
-public enum Packing {
-    /**
-     * The packing is performed by shifting the components to particular positions of an int or long value.
-     * <p>
-     * This packing method is more efficient than {@link #DECIMAL} but is usually not human readable.
-     */
-    BINARY,
-    /**
-     * The packing is performed by multiplying the components with powers of ten and then adding those multiples.
-     * <p>
-     * This packing method is less efficient than {@link #BINARY} but is usually human readable, for instance packing
-     * th date 30st April 1979 as 19790430.
-     */
-    DECIMAL;
+@FunctionalInterface
+public interface CharWriter<T> {
+    void writeChar(T target, int index, char value);
 
-    private static Packing[] VALUES = values();
+    CharWriter<StringBuilder> STRING_BUILDER = (s, i, v) -> {
+        s.setLength(Math.max(i + 1, s.length()));
+        s.setCharAt(i, v);
+    };
 
-    public static final int length() {
-        return VALUES.length;
-    }
-
-    public static final Packing valueByOrdinal(final int ordinal) {
-        return VALUES[ordinal];
-    }
-
-    public static final void forEach(final Consumer<? super Packing> consumer) {
-        for (final Packing packing : VALUES) {
-            consumer.accept(packing);
-        }
-    }
+    CharWriter<StringBuffer> STRING_BUFFER = (s, i, v) -> {
+        s.setLength(Math.max(i + 1, s.length()));
+        s.setCharAt(i, v);
+    };
+    CharWriter<char[]> CHAR_ARRAY = (a, i, v) -> a[i] = v;
+    CharWriter<byte[]> BYTE_ARRAY = (a, i, v) -> a[i] = (byte)v;
+    CharWriter<CharBuffer> CHAR_BUFFER = (b, i, v) -> b.put(i, v);
+    CharWriter<ByteBuffer> BYTE_BUFFER = (b, i, v) -> b.put(i, (byte)v);
 }

@@ -21,22 +21,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.tools4j.time;
+package org.tools4j.time.base;
 
-/**
- * Defines different methods to validate values.
- */
-public enum ValidationMethod {
-    /**
-     * No validation is performed.
-     */
-    UNVALIDATED,
-    /**
-     * Validation is performed and failure is signalled by a special result value.
-     */
-    INVALIDATE_RESULT,
-    /**
-     * Validation is performed and failure is signalled through an exception.
-     */
-    THROW_EXCEPTION;
+import java.lang.annotation.*;
+
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE, ElementType.METHOD})
+public @interface Garbage {
+    Type value();
+    enum Type {
+        /**
+         * Indicates that only the result value returned by a method is allocated and no other
+         * garbage is created by invoking the method.
+         */
+        RESULT,
+        /**
+         * Indicates that any type of objects may be allocated when a method is called, including
+         * temporary objects.
+         */
+        ANY;
+    }
 }

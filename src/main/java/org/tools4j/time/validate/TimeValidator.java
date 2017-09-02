@@ -21,11 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.tools4j.time;
+package org.tools4j.time.validate;
 
 import java.time.DateTimeException;
 
-import static org.tools4j.time.TimeFactors.*;
+import static org.tools4j.time.base.TimeFactors.*;
 
 /**
  * Defines validators for time components.

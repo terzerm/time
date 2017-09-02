@@ -21,25 +21,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.tools4j.time;
+package org.tools4j.time.format;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 
-public interface CharWriter<T> {
-    void writeChar(T target, int index, char value);
+@FunctionalInterface
+public interface CharReader<S> {
+    char readChar(S source, int index);
 
-    CharWriter<StringBuilder> STRING_BUILDER = (s, i, v) -> {
-        s.setLength(Math.max(i + 1, s.length()));
-        s.setCharAt(i, v);
-    };
-
-    CharWriter<StringBuffer> STRING_BUFFER = (s, i, v) -> {
-        s.setLength(Math.max(i + 1, s.length()));
-        s.setCharAt(i, v);
-    };
-    CharWriter<char[]> CHAR_ARRAY = (a, i, v) -> a[i] = v;
-    CharWriter<byte[]> BYTE_ARRAY = (a, i, v) -> a[i] = (byte)v;
-    CharWriter<CharBuffer> CHAR_BUFFER = (b, i, v) -> b.put(i, v);
-    CharWriter<ByteBuffer> BYTE_BUFFER = (b, i, v) -> b.put(i, (byte)v);
+    CharReader<CharSequence> CHAR_SEQUENCE = (s, i) -> s.charAt(i);
+    CharReader<char[]> CHAR_ARRAY = (a, i) -> a[i];
+    CharReader<byte[]> BYTE_ARRAY = (a, i) -> (char)a[i];
+    CharReader<CharBuffer> CHAR_BUFFER = (b, i) -> b.get(i);
+    CharReader<ByteBuffer> BYTE_BUFFER = (b, i) -> (char)b.get(i);
 }
