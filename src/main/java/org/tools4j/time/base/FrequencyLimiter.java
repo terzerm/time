@@ -29,7 +29,9 @@ import java.util.function.BooleanSupplier;
 
 public class FrequencyLimiter {
 
-    private final long resetTimeNanos = TimeUnit.SECONDS.toNanos(1);
+    private final static long DEFAULT_RESET_TIME_NANOS = TimeUnit.SECONDS.toNanos(1);
+
+    private final long resetTimeNanos;
     private final BooleanSupplier invokable;
     private final double nanosPerRun;
 
@@ -37,16 +39,17 @@ public class FrequencyLimiter {
     private long lastCheckTimeNanos;
     private long countSinceLastCheck;
 
-    private FrequencyLimiter(final BooleanSupplier invokable, final int maxInvocationsPerSecond) {
+    private FrequencyLimiter(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
         if (maxInvocationsPerSecond <= 0) {
             throw new IllegalArgumentException("maxInvocationsPerSecond must be positive: " + maxInvocationsPerSecond);
         }
         this.invokable = Objects.requireNonNull(invokable);
         this.nanosPerRun = 1e9 / maxInvocationsPerSecond;
+        this.resetTimeNanos = Math.max((long)Math.ceil(nanosPerRun), DEFAULT_RESET_TIME_NANOS);
         this.action = this::initialRun;
     }
 
-    public static Runnable forRunnable(final Runnable runnable, final int maxInvocationsPerSecond) {
+    public static Runnable forRunnable(final Runnable runnable, final double maxInvocationsPerSecond) {
         final BooleanSupplier booleanSupplier = forBooleanSupplier(() -> {
             runnable.run();
             return true;
@@ -54,7 +57,7 @@ public class FrequencyLimiter {
         return () -> booleanSupplier.getAsBoolean();
     }
 
-    public static BooleanSupplier forBooleanSupplier(final BooleanSupplier invokable, final int maxInvocationsPerSecond) {
+    public static BooleanSupplier forBooleanSupplier(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
         final FrequencyLimiter lim = new FrequencyLimiter(invokable, maxInvocationsPerSecond);
         return () -> lim.action.getAsBoolean();
     }

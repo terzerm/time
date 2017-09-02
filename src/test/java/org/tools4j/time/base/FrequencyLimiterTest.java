@@ -40,35 +40,35 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(Spockito.class)
 @Spockito.Unroll({
-        "| Updates/second |",
-        "|----------------|",
-        "|           1    |",
-//        "|           5    |",
-        "|          10    |",
-//        "|          50    |",
-//        "|         100    |",
-        "|        1000    |",
-//        "|        2000    |",
-//        "|        5000    |",
-        "|       10000    |",
-        "|      100000    |",
-//        "|      200000    |",
-//        "|      500000    |",
-        "|     1000000    |",
+        "|  Updates/second | Running time (s) |",
+        "|-----------------|------------------|",
+        "|           0.25  |        10        |",
+        "|           0.5   |         5        |",
+        "|           1     |         3        |",
+//        "|           5     |        3        |",
+        "|          10     |         3        |",
+//        "|          50     |         3        |",
+//        "|         100     |         3        |",
+        "|        1000     |         3        |",
+//        "|        2000     |         3        |",
+//        "|        5000     |         3        |",
+        "|       10000     |         3        |",
+        "|      100000     |         3        |",
+//        "|      200000     |         3        |",
+//        "|      500000     |         3        |",
+        "|     1000000     |         3        |",
 })
 public class FrequencyLimiterTest {
 
-    private static final long RUNNING_TIME_MILLIS = TimeUnit.SECONDS.toMillis(3);
-
     @Test
-    public void forRunnable(final int updatesPerSecond) throws Exception {
+    public void forRunnable(final double updatesPerSecond, final int runningTimeSeconds) throws Exception {
         final AtomicLong counter = new AtomicLong();
         final Runnable runnable = FrequencyLimiter.forRunnable(counter::incrementAndGet, updatesPerSecond);
-        runTest(counter, runnable, updatesPerSecond);
+        runTest(counter, runnable, updatesPerSecond, runningTimeSeconds);
     }
 
     @Test
-    public void forBooleanSupplier(final int updatesPerSecond) throws Exception {
+    public void forBooleanSupplier(final double updatesPerSecond, final int runningTimeSeconds) throws Exception {
         final AtomicBoolean toggler = new AtomicBoolean();
         final AtomicLong allCounter = new AtomicLong();
         final AtomicLong counter = new AtomicLong();
@@ -85,7 +85,7 @@ public class FrequencyLimiterTest {
             if (supplier.getAsBoolean()) {
                 resultCounter.incrementAndGet();
             }
-        }, updatesPerSecond);
+        }, updatesPerSecond, runningTimeSeconds);
 
         System.out.println("allCounter:\t" + allCounter);
         System.out.println("counter:\t" + counter);
@@ -95,7 +95,9 @@ public class FrequencyLimiterTest {
         assertEquals("result-counter should same as counter", counter.get(), resultCounter.get());
     }
 
-    private void runTest(final AtomicLong counter, final Runnable runnable, final int updatesPerSecond) {
+    private void runTest(final AtomicLong counter, final Runnable runnable,
+                         final double updatesPerSecond, final int runningTimeSeconds) {
+        final long runningTimeMillis = TimeUnit.SECONDS.toMillis(runningTimeSeconds);
         final long startTimeMillis = System.currentTimeMillis();
         long lastSecondCount = 0;
         long lastSecondTimeMillis = startTimeMillis;
@@ -112,7 +114,7 @@ public class FrequencyLimiterTest {
                     assertTrue(time + ": + " + deltaCount + " should be within 1% of " + updatesPerSecond,
                             Math.abs(updatesPerSecond - deltaCount) <= (1 + updatesPerSecond/100));
                 }
-                if (timeMillis - startTimeMillis >= RUNNING_TIME_MILLIS) {
+                if (timeMillis - startTimeMillis >= runningTimeMillis) {
                     return;
                 }
             }
