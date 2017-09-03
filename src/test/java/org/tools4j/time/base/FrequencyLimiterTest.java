@@ -27,7 +27,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.tools4j.spockito.Spockito;
 import org.tools4j.time.throttle.SimpleFrequencyLimiter;
-import org.tools4j.time.throttle.SlidingWindowFrequencyLimiter;
+import org.tools4j.time.throttle.SlidingCountWindowFrequencyLimiter;
+import org.tools4j.time.throttle.SlidingTimeWindowFrequencyLimiter;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,7 +39,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Unit test for {@link SlidingWindowFrequencyLimiter}
+ * Unit test for {@link SlidingTimeWindowFrequencyLimiter}
  */
 @RunWith(Spockito.class)
 @Spockito.Unroll({
@@ -71,8 +72,12 @@ public class FrequencyLimiterTest {
         runnable(SimpleFrequencyLimiter::forRunnable, updatesPerSecond, runningTimeSeconds);
     }
     @Test
-    public void slidingWindow_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
-        runnable(SlidingWindowFrequencyLimiter::forRunnable, updatesPerSecond, runningTimeSeconds);
+    public void slidingTimeWindow_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
+        runnable(SlidingTimeWindowFrequencyLimiter::forRunnable, updatesPerSecond, runningTimeSeconds);
+    }
+    @Test
+    public void slidingCountWindow_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
+        runnable(SlidingCountWindowFrequencyLimiter::forRunnable, updatesPerSecond, runningTimeSeconds);
     }
     private void runnable(final Constructor<Runnable> constructor,
                           final double updatesPerSecond, final int runningTimeSeconds) {
@@ -86,8 +91,12 @@ public class FrequencyLimiterTest {
         booleanSupplier(SimpleFrequencyLimiter::forBooleanSupplier, updatesPerSecond, runningTimeSeconds);
     }
     @Test
-    public void slidingWindow_booleanSupplier(final double updatesPerSecond, final int runningTimeSeconds) {
-        booleanSupplier(SlidingWindowFrequencyLimiter::forBooleanSupplier, updatesPerSecond, runningTimeSeconds);
+    public void slidingTimeWindow_booleanSupplier(final double updatesPerSecond, final int runningTimeSeconds) {
+        booleanSupplier(SlidingTimeWindowFrequencyLimiter::forBooleanSupplier, updatesPerSecond, runningTimeSeconds);
+    }
+    @Test
+    public void slidingCountWindow_booleanSupplier(final double updatesPerSecond, final int runningTimeSeconds) {
+        booleanSupplier(SlidingCountWindowFrequencyLimiter::forBooleanSupplier, updatesPerSecond, runningTimeSeconds);
     }
     public void booleanSupplier(final Constructor<BooleanSupplier> constructor,
                                 final double updatesPerSecond, final int runningTimeSeconds) {

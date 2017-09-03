@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
-public class SlidingWindowFrequencyLimiter {
+public class SlidingTimeWindowFrequencyLimiter {
 
     private static final int SLIDING_WINDOW_SIZE = 32;
     private final static long DEFAULT_WINDOW_SLIDING_TIME_NANOS = TimeUnit.SECONDS.toNanos(1);
@@ -41,7 +41,7 @@ public class SlidingWindowFrequencyLimiter {
 
     private BooleanSupplier action;
 
-    private SlidingWindowFrequencyLimiter(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
+    private SlidingTimeWindowFrequencyLimiter(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
         this.invokable = Objects.requireNonNull(invokable);
         if (maxInvocationsPerSecond <= 0) {
             throw new IllegalArgumentException("maxInvocationsPerSecond must be positive: " + maxInvocationsPerSecond);
@@ -61,7 +61,7 @@ public class SlidingWindowFrequencyLimiter {
     }
 
     public static BooleanSupplier forBooleanSupplier(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
-        final SlidingWindowFrequencyLimiter lim = new SlidingWindowFrequencyLimiter(invokable, maxInvocationsPerSecond);
+        final SlidingTimeWindowFrequencyLimiter lim = new SlidingTimeWindowFrequencyLimiter(invokable, maxInvocationsPerSecond);
         return () -> lim.action.getAsBoolean();
     }
 
