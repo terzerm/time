@@ -53,7 +53,7 @@ public class CountSlidingWindowThrottler {
         }
         this.invokable = Objects.requireNonNull(invokable);
         this.nanosPerRun = TimeFactors.NANOS_PER_SECOND / maxInvocationsPerSecond;
-        this.sliceMaxCount = sliceMaxCount;//Math.max(1, (long)Math.ceil(maxInvocationsPerSecond / slidingWindowSize));
+        this.sliceMaxCount = sliceMaxCount;
         this.invokableWithInitializer = Invokable.withInitializer(this::initialRun, this::timedRun);
         this.slidingCountWindow = new SlidingCountWindow(slidingWindowSize);
     }
@@ -112,7 +112,7 @@ public class CountSlidingWindowThrottler {
         }
         if (deltaTimeNanos >= expectedDeltaTimeNanos) {
             if (invokable.invoke()) {
-                slidingCountWindow.incrementCount();
+                slidingCountWindow.incrementLastSliceCount();
                 return true;
             }
         }

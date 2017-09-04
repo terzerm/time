@@ -25,8 +25,8 @@ package org.tools4j.time.throttle;
 
 final class SlidingCountWindow {
     private final int n;
-    private long[] timeNanos;
-    private long[] count;
+    private final long[] timeNanos;
+    private final long[] count;
     private int start;
     private int end;
 
@@ -79,11 +79,11 @@ final class SlidingCountWindow {
         return count[end] - count[start];
     }
 
-    void incrementCount() {
-        count[end]++;
-    }
-
     long sliceCount() {
         return count[end] - count[decrementIndex(end)];
+    }
+
+    void incrementLastSliceCount() {
+        count[end]++;
     }
 }

@@ -140,7 +140,7 @@ public class ThrottlerTest {
                     final long deltaMillis = timeMillis - lastTimeMillis;
                     lastCount = counter.get();
                     lastTimeMillis = timeMillis;
-                    System.out.println(time + ": counter=" + counter + ", increment=" + deltaCount);
+                    System.out.println(time + ": counter=" + counter + ", incrementLastSliceCount=" + deltaCount);
                     final double updatesPerDeltaTime = updatesPerSecond * deltaMillis / 1000;
                     assertTrue(time + ": " + deltaCount + " should be within 1% of " + updatesPerDeltaTime,
                             Math.abs(updatesPerDeltaTime - deltaCount) <= (1 + updatesPerDeltaTime/100));

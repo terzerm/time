@@ -30,8 +30,8 @@ import java.util.concurrent.TimeUnit;
 
 public class TimeSlidingWIndowThrottler {
 
-    private static final int SLIDING_WINDOW_SIZE = 32;
-    private final static long DEFAULT_WINDOW_SLIDING_TIME_NANOS = TimeUnit.SECONDS.toNanos(1);
+    private static final int DEFAULT_SLIDING_WINDOW_SIZE = 32;
+    private static final long DEFAULT_WINDOW_SLIDING_TIME_NANOS = TimeUnit.SECONDS.toNanos(1);
 
     private final long sliceSlidingTimeNanos;
     private final Invokable invokable;
@@ -39,31 +39,51 @@ public class TimeSlidingWIndowThrottler {
     private final SlidingCountWindow slidingCountWindow;
     private final Invokable invokableWithInitializer;
 
-    private TimeSlidingWIndowThrottler(final Invokable invokable, final double maxInvocationsPerSecond) {
+    private TimeSlidingWIndowThrottler(final Invokable invokable, final double maxInvocationsPerSecond,
+                                       final int slidingWindowSize, final long windowSlidingTimeNanos) {
         this.invokable = Objects.requireNonNull(invokable);
         if (maxInvocationsPerSecond <= 0) {
             throw new IllegalArgumentException("maxInvocationsPerSecond must be positive: " + maxInvocationsPerSecond);
         }
-        this.nanosPerRun = TimeFactors.NANOS_PER_SECOND / maxInvocationsPerSecond;
-        this.sliceSlidingTimeNanos = ceilDiv(windowSlidingTimeFor(maxInvocationsPerSecond), SLIDING_WINDOW_SIZE);
+        if (slidingWindowSize <= 0) {
+            throw new IllegalArgumentException("slidingWindowSize must be positive: " + slidingWindowSize);
+        }
+        this.nanosPerRun = nanosPerRun(maxInvocationsPerSecond);
+        this.sliceSlidingTimeNanos = ceilDiv(windowSlidingTimeNanos, slidingWindowSize);
+        if (sliceSlidingTimeNanos < nanosPerRun) {
+            throw new IllegalArgumentException("sliceSlidingTimeNanos must at least nanosPerRun: " + sliceSlidingTimeNanos + " < " + nanosPerRun);
+        }
         this.invokableWithInitializer = Invokable.withInitializer(this::initialRun, this::timedRun);
-        this.slidingCountWindow = new SlidingCountWindow(SLIDING_WINDOW_SIZE);
+        this.slidingCountWindow = new SlidingCountWindow(slidingWindowSize);
     }
 
     public static Runnable forRunnable(final Runnable runnable, final double maxInvocationsPerSecond) {
         return forInvokable(Invokable.forRunnable(runnable), maxInvocationsPerSecond)::invoke;
     }
 
+    public static Runnable forRunnable(final Runnable runnable, final double maxInvocationsPerSecond,
+                                       final int slidingWindowSize, final long windowSlidingTime, final TimeUnit slidingTimeUnit) {
+        return forInvokable(Invokable.forRunnable(runnable), maxInvocationsPerSecond, slidingWindowSize, windowSlidingTime, slidingTimeUnit)::invoke;
+    }
+
     public static Invokable forInvokable(final Invokable invokable, final double maxInvocationsPerSecond) {
-        return new TimeSlidingWIndowThrottler(invokable, maxInvocationsPerSecond).invokableWithInitializer;
+        final long windowSlidingTimeNanos = defaultWindowSlidingTimeNanosFor(maxInvocationsPerSecond);
+        return forInvokable(invokable, maxInvocationsPerSecond, DEFAULT_SLIDING_WINDOW_SIZE, windowSlidingTimeNanos, TimeUnit.NANOSECONDS);
+    }
+
+    public static Invokable forInvokable(final Invokable invokable, final double maxInvocationsPerSecond,
+                                         final int slidingWindowSize, final long windowSlidingTime, final TimeUnit slidingTimeUnit) {
+        final long windowSlidingTimeNanos = slidingTimeUnit.toNanos(windowSlidingTime);
+        return new TimeSlidingWIndowThrottler(invokable, maxInvocationsPerSecond, slidingWindowSize, windowSlidingTimeNanos)
+                .invokableWithInitializer;
+    }
+
+    private static long defaultWindowSlidingTimeNanosFor(final double maxInvocationsPerSecond) {
+        return Math.max((long)Math.ceil(DEFAULT_SLIDING_WINDOW_SIZE * nanosPerRun(maxInvocationsPerSecond)), DEFAULT_WINDOW_SLIDING_TIME_NANOS);
     }
 
     private static double nanosPerRun(final double maxInvocationsPerSecond) {
         return TimeFactors.NANOS_PER_SECOND / maxInvocationsPerSecond;
-    }
-
-    private static long windowSlidingTimeFor(final double maxInvocationsPerSecond) {
-        return Math.max((long)Math.ceil(SLIDING_WINDOW_SIZE * nanosPerRun(maxInvocationsPerSecond)), DEFAULT_WINDOW_SLIDING_TIME_NANOS);
     }
 
     private static long ceilDiv(final long dividend, final long divisor) {
@@ -84,7 +104,7 @@ public class TimeSlidingWIndowThrottler {
         }
         if (deltaTimeNanos >= expectedDeltaTimeNanos) {
             if (invokable.invoke()) {
-                slidingCountWindow.incrementCount();
+                slidingCountWindow.incrementLastSliceCount();
                 return true;
             }
         }

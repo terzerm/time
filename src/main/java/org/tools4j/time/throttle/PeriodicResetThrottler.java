@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 public class PeriodicResetThrottler {
 
-    private final static long DEFAULT_RESET_TIME_NANOS = TimeUnit.SECONDS.toNanos(1);
+    private static final long DEFAULT_RESET_TIME_NANOS = TimeUnit.SECONDS.toNanos(1);
 
     private final double nanosPerRun;
     private final long resetTimeNanos;
@@ -40,22 +40,44 @@ public class PeriodicResetThrottler {
     private long lastCheckTimeNanos;
     private long countSinceLastCheck;
 
-    private PeriodicResetThrottler(final Invokable invokable, final double maxInvocationsPerSecond) {
+    private PeriodicResetThrottler(final Invokable invokable, final double maxInvocationsPerSecond, final long resetTimeNanos) {
         if (maxInvocationsPerSecond <= 0) {
             throw new IllegalArgumentException("maxInvocationsPerSecond must be positive: " + maxInvocationsPerSecond);
         }
         this.invokable = Objects.requireNonNull(invokable);
-        this.nanosPerRun = TimeFactors.NANOS_PER_SECOND / maxInvocationsPerSecond;
-        this.resetTimeNanos = Math.max((long)Math.ceil(nanosPerRun), DEFAULT_RESET_TIME_NANOS);
+        this.nanosPerRun = nanosPerRun(maxInvocationsPerSecond);
+        if (resetTimeNanos < nanosPerRun) {
+            throw new IllegalArgumentException("resetTimeNanos must be at least nanosPerRun: " + resetTimeNanos + " < " + nanosPerRun);
+        }
+        this.resetTimeNanos = resetTimeNanos;
         this.invokableWithInitializer = Invokable.withInitializer(this::initialRun, this::timedRun);
     }
-
+    ;
     public static Runnable forRunnable(final Runnable runnable, final double maxInvocationsPerSecond) {
-        return forInvokable(Invokable.forRunnable(runnable), maxInvocationsPerSecond)::invoke;
+        return forRunnable(runnable, maxInvocationsPerSecond, defaultResetTimeNanos(maxInvocationsPerSecond), TimeUnit.NANOSECONDS);
+    }
+
+    public static Runnable forRunnable(final Runnable runnable, final double maxInvocationsPerSecond,
+                                       final long resetTime, final TimeUnit resetTimeUnit) {
+        return forInvokable(Invokable.forRunnable(runnable), maxInvocationsPerSecond, resetTime, resetTimeUnit)::invoke;
     }
 
     public static Invokable forInvokable(final Invokable invokable, final double maxInvocationsPerSecond) {
-        return new PeriodicResetThrottler(invokable, maxInvocationsPerSecond).invokableWithInitializer;
+        return forInvokable(invokable, maxInvocationsPerSecond, defaultResetTimeNanos(maxInvocationsPerSecond), TimeUnit.NANOSECONDS);
+    }
+
+    public static Invokable forInvokable(final Invokable invokable, final double maxInvocationsPerSecond,
+                                         final long resetTime, final TimeUnit resetTimeUnit) {
+        final long resetTimeNanos = resetTimeUnit.toNanos(resetTime);
+        return new PeriodicResetThrottler(invokable, maxInvocationsPerSecond, resetTimeNanos).invokableWithInitializer;
+    }
+
+    private static double nanosPerRun(final double maxInvocationsPerSecond) {
+        return TimeFactors.NANOS_PER_SECOND / maxInvocationsPerSecond;
+    }
+
+    private static long defaultResetTimeNanos(final double maxInvocationsPerSecond) {
+        return Math.max((long)Math.ceil(nanosPerRun(maxInvocationsPerSecond)), DEFAULT_RESET_TIME_NANOS);
     }
 
     private boolean initialRun() {
