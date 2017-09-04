@@ -21,15 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.tools4j.time.base;
+package org.tools4j.time.throttle;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.tools4j.spockito.Spockito;
-import org.tools4j.time.throttle.CountSlidingWindowThrottler;
-import org.tools4j.time.throttle.Invokable;
-import org.tools4j.time.throttle.PeriodicResetThrottler;
-import org.tools4j.time.throttle.TimeSlidingWIndowThrottler;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,7 +43,7 @@ import static org.junit.Assert.assertTrue;
         "|  Updates/second | Running time (s) |",
         "|-----------------|------------------|",
         "|           0.25  |        10        |",
-        "|           0.5   |         5        |",
+//        "|           0.5   |         5        |",
         "|           1     |         3        |",
 //        "|           5     |        3        |",
         "|          10     |         3        |",
@@ -57,10 +53,11 @@ import static org.junit.Assert.assertTrue;
 //        "|        2000     |         3        |",
 //        "|        5000     |         3        |",
         "|       10000     |         3        |",
-        "|      100000     |         3        |",
+//        "|      100000     |         3        |",
 //        "|      200000     |         3        |",
 //        "|      500000     |         3        |",
-        "|     1000000     |         3        |",
+//        "|     1000000     |         3        |",
+//        "|      3000000     |         3        |",
 })
 public class ThrottlerTest {
 
@@ -78,7 +75,7 @@ public class ThrottlerTest {
     }
     @Test
     public void countSlidingWindow_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
-        runnable(CountSlidingWindowThrottler::forRunnable, updatesPerSecond, runningTimeSeconds);
+        runnable((t, f) -> CountSlidingWindowThrottler.forRunnable(t, f, 1, TimeUnit.SECONDS), updatesPerSecond, runningTimeSeconds);
     }
     private void runnable(final Constructor<Runnable> constructor,
                           final double updatesPerSecond, final int runningTimeSeconds) {
@@ -97,7 +94,7 @@ public class ThrottlerTest {
     }
     @Test
     public void countSlidingWindow_invokable(final double updatesPerSecond, final int runningTimeSeconds) {
-        invokable(CountSlidingWindowThrottler::forInvokable, updatesPerSecond, runningTimeSeconds);
+        invokable((t, f) -> CountSlidingWindowThrottler.forInvokable(t, f, 1, TimeUnit.SECONDS), updatesPerSecond, runningTimeSeconds);
     }
     public void invokable(final Constructor<Invokable> constructor,
                           final double updatesPerSecond, final int runningTimeSeconds) {

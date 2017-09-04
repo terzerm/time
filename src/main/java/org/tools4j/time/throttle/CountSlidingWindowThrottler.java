@@ -33,7 +33,7 @@ public class CountSlidingWindowThrottler {
     private static final int SLIDING_WINDOW_MIN_SIZE = 4;
     private static final int SLIDING_WINDOW_MAX_SIZE = 1024;
     private static final long CYCLE_MIN_COUNT = 1024;
-    private static final long CYCLE_MIN_MILLIS = 20;
+    private static final long CYCLE_MIN_MILLIS = 50;
     private static final long CYCLE_MAX_MILLIS = 4000;
 
     private final long sliceMaxCount;
@@ -88,8 +88,7 @@ public class CountSlidingWindowThrottler {
                 Math.max(SLIDING_WINDOW_MIN_SIZE, (int)Math.sqrt(maxInvocationsPerSecond * cycleMillis / 1000))
         );
         final long slizeMaxCount = Math.max(1, (long)(maxInvocationsPerSecond * cycleMillis / 1000 / slidingWindowSize));
-        //FIXME remove below line
-        System.out.println("cycleMillis=" + cycleMillis + ", slidingWindowSize=" + slidingWindowSize + ", sliceMaxCount=" + slizeMaxCount);
+//        System.out.println("cycleMillis=" + cycleMillis + ", slidingWindowSize=" + slidingWindowSize + ", sliceMaxCount=" + slizeMaxCount);
         return forInvokable(invokable, maxInvocationsPerSecond, slidingWindowSize, slizeMaxCount);
     }
     public static Invokable forInvokable(final Invokable invokable, final double maxInvocationsPerSecond,
