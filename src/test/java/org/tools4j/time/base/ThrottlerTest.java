@@ -26,20 +26,21 @@ package org.tools4j.time.base;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.tools4j.spockito.Spockito;
-import org.tools4j.time.throttle.SimpleFrequencyLimiter;
-import org.tools4j.time.throttle.SlidingCountWindowFrequencyLimiter;
-import org.tools4j.time.throttle.SlidingTimeWindowFrequencyLimiter;
+import org.tools4j.time.throttle.CountSlidingWindowThrottler;
+import org.tools4j.time.throttle.Invokable;
+import org.tools4j.time.throttle.PeriodicResetThrottler;
+import org.tools4j.time.throttle.TimeSlidingWIndowThrottler;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BooleanSupplier;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Unit test for {@link SlidingTimeWindowFrequencyLimiter}
+ * Unit test for {@link PeriodicResetThrottler}, {@link TimeSlidingWIndowThrottler} and
+ * {@link CountSlidingWindowThrottler}.
  */
 @RunWith(Spockito.class)
 @Spockito.Unroll({
@@ -61,23 +62,23 @@ import static org.junit.Assert.assertTrue;
 //        "|      500000     |         3        |",
         "|     1000000     |         3        |",
 })
-public class FrequencyLimiterTest {
+public class ThrottlerTest {
 
     interface Constructor<T> {
         T create(T task, double maxUpdatesPerSecond);
     }
 
     @Test
-    public void simple_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
-        runnable(SimpleFrequencyLimiter::forRunnable, updatesPerSecond, runningTimeSeconds);
+    public void periodicReset_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
+        runnable(PeriodicResetThrottler::forRunnable, updatesPerSecond, runningTimeSeconds);
     }
     @Test
-    public void slidingTimeWindow_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
-        runnable(SlidingTimeWindowFrequencyLimiter::forRunnable, updatesPerSecond, runningTimeSeconds);
+    public void timeSlidingWindow_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
+        runnable(TimeSlidingWIndowThrottler::forRunnable, updatesPerSecond, runningTimeSeconds);
     }
     @Test
-    public void slidingCountWindow_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
-        runnable(SlidingCountWindowFrequencyLimiter::forRunnable, updatesPerSecond, runningTimeSeconds);
+    public void countSlidingWindow_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
+        runnable(CountSlidingWindowThrottler::forRunnable, updatesPerSecond, runningTimeSeconds);
     }
     private void runnable(final Constructor<Runnable> constructor,
                           final double updatesPerSecond, final int runningTimeSeconds) {
@@ -87,23 +88,23 @@ public class FrequencyLimiterTest {
     }
 
     @Test
-    public void simple_booleanSupplier(final double updatesPerSecond, final int runningTimeSeconds) {
-        booleanSupplier(SimpleFrequencyLimiter::forBooleanSupplier, updatesPerSecond, runningTimeSeconds);
+    public void periodicReset_invokable(final double updatesPerSecond, final int runningTimeSeconds) {
+        invokable(PeriodicResetThrottler::forInvokable, updatesPerSecond, runningTimeSeconds);
     }
     @Test
-    public void slidingTimeWindow_booleanSupplier(final double updatesPerSecond, final int runningTimeSeconds) {
-        booleanSupplier(SlidingTimeWindowFrequencyLimiter::forBooleanSupplier, updatesPerSecond, runningTimeSeconds);
+    public void timeSlidingWindow_invokable(final double updatesPerSecond, final int runningTimeSeconds) {
+        invokable(TimeSlidingWIndowThrottler::forInvokable, updatesPerSecond, runningTimeSeconds);
     }
     @Test
-    public void slidingCountWindow_booleanSupplier(final double updatesPerSecond, final int runningTimeSeconds) {
-        booleanSupplier(SlidingCountWindowFrequencyLimiter::forBooleanSupplier, updatesPerSecond, runningTimeSeconds);
+    public void countSlidingWindow_invokable(final double updatesPerSecond, final int runningTimeSeconds) {
+        invokable(CountSlidingWindowThrottler::forInvokable, updatesPerSecond, runningTimeSeconds);
     }
-    public void booleanSupplier(final Constructor<BooleanSupplier> constructor,
-                                final double updatesPerSecond, final int runningTimeSeconds) {
+    public void invokable(final Constructor<Invokable> constructor,
+                          final double updatesPerSecond, final int runningTimeSeconds) {
         final AtomicBoolean toggler = new AtomicBoolean();
         final AtomicLong allCounter = new AtomicLong();
         final AtomicLong counter = new AtomicLong();
-        final BooleanSupplier supplier = constructor.create(() -> {
+        final Invokable invokable = constructor.create(() -> {
             allCounter.incrementAndGet();
             if (toggler.getAndSet(!toggler.get())) {
                 counter.incrementAndGet();
@@ -113,7 +114,7 @@ public class FrequencyLimiterTest {
         }, updatesPerSecond);
         final AtomicLong resultCounter = new AtomicLong();
         runTest(counter, () -> {
-            if (supplier.getAsBoolean()) {
+            if (invokable.invoke()) {
                 resultCounter.incrementAndGet();
             }
         }, updatesPerSecond, runningTimeSeconds);

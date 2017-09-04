@@ -27,42 +27,35 @@ import org.tools4j.time.base.TimeFactors;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
 
-public class SlidingTimeWindowFrequencyLimiter {
+public class TimeSlidingWIndowThrottler {
 
     private static final int SLIDING_WINDOW_SIZE = 32;
     private final static long DEFAULT_WINDOW_SLIDING_TIME_NANOS = TimeUnit.SECONDS.toNanos(1);
 
     private final long sliceSlidingTimeNanos;
-    private final BooleanSupplier invokable;
+    private final Invokable invokable;
     private final double nanosPerRun;
     private final SlidingCountWindow slidingCountWindow;
+    private final Invokable invokableWithInitializer;
 
-    private BooleanSupplier action;
-
-    private SlidingTimeWindowFrequencyLimiter(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
+    private TimeSlidingWIndowThrottler(final Invokable invokable, final double maxInvocationsPerSecond) {
         this.invokable = Objects.requireNonNull(invokable);
         if (maxInvocationsPerSecond <= 0) {
             throw new IllegalArgumentException("maxInvocationsPerSecond must be positive: " + maxInvocationsPerSecond);
         }
         this.nanosPerRun = TimeFactors.NANOS_PER_SECOND / maxInvocationsPerSecond;
         this.sliceSlidingTimeNanos = ceilDiv(windowSlidingTimeFor(maxInvocationsPerSecond), SLIDING_WINDOW_SIZE);
-        this.action = this::initialRun;
+        this.invokableWithInitializer = Invokable.withInitializer(this::initialRun, this::timedRun);
         this.slidingCountWindow = new SlidingCountWindow(SLIDING_WINDOW_SIZE);
     }
 
     public static Runnable forRunnable(final Runnable runnable, final double maxInvocationsPerSecond) {
-        final BooleanSupplier booleanSupplier = forBooleanSupplier(() -> {
-            runnable.run();
-            return true;
-        }, maxInvocationsPerSecond);
-        return () -> booleanSupplier.getAsBoolean();
+        return forInvokable(Invokable.forRunnable(runnable), maxInvocationsPerSecond)::invoke;
     }
 
-    public static BooleanSupplier forBooleanSupplier(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
-        final SlidingTimeWindowFrequencyLimiter lim = new SlidingTimeWindowFrequencyLimiter(invokable, maxInvocationsPerSecond);
-        return () -> lim.action.getAsBoolean();
+    public static Invokable forInvokable(final Invokable invokable, final double maxInvocationsPerSecond) {
+        return new TimeSlidingWIndowThrottler(invokable, maxInvocationsPerSecond).invokableWithInitializer;
     }
 
     private static double nanosPerRun(final double maxInvocationsPerSecond) {
@@ -79,7 +72,6 @@ public class SlidingTimeWindowFrequencyLimiter {
 
     private boolean initialRun() {
         slidingCountWindow.init(System.nanoTime());
-        action = this::timedRun;
         return false;
     }
 
@@ -91,59 +83,11 @@ public class SlidingTimeWindowFrequencyLimiter {
             slidingCountWindow.slide(nanoTime);
         }
         if (deltaTimeNanos >= expectedDeltaTimeNanos) {
-            if (invokable.getAsBoolean()) {
+            if (invokable.invoke()) {
                 slidingCountWindow.incrementCount();
                 return true;
             }
         }
         return false;
-    }
-
-    private static class SlidingCountWindow {
-        private final int n;
-        private long[] timeNanos;
-        private long[] count;
-        private int start;
-        private int end;
-        SlidingCountWindow(final int len) {
-            this.n = len + 1;
-            this.timeNanos = new long[n];
-            this.count = new long[n];
-        }
-        void init(final long nanoTime) {
-            timeNanos[0] = nanoTime;
-            count[0] = 0;
-            timeNanos[1] = nanoTime;
-            count[1] = 0;
-            start = 0;
-            end = 1;
-        }
-        void slide(final long nanoTime) {
-            final long cnt = count[end];
-            timeNanos[end] = nanoTime;
-            end = incrementIndex(end);
-            if (end == start) {
-                start = incrementIndex(start);
-            }
-            timeNanos[end] = nanoTime;
-            count[end] = cnt;
-
-        }
-        int incrementIndex(final int index) {
-            final int ix = index + 1;
-            return ix < n ? ix : 0;
-        }
-        long windowTime(final long timeNanos) {
-            return timeNanos - this.timeNanos[start];
-        }
-        long windowCount() {
-            return count[end] - count[start];
-        }
-        void incrementCount() {
-            count[end]++;
-        }
-        long sliceTime(final long timeNanos) {
-            return timeNanos - this.timeNanos[end];
-        }
     }
 }

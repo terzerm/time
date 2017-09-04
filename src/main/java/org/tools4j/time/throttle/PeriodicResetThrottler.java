@@ -27,47 +27,40 @@ import org.tools4j.time.base.TimeFactors;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
 
-public class SimpleFrequencyLimiter {
+public class PeriodicResetThrottler {
 
     private final static long DEFAULT_RESET_TIME_NANOS = TimeUnit.SECONDS.toNanos(1);
 
-    private final long resetTimeNanos;
-    private final BooleanSupplier invokable;
     private final double nanosPerRun;
+    private final long resetTimeNanos;
+    private final Invokable invokable;
+    private final Invokable invokableWithInitializer;
 
-    private BooleanSupplier action;
     private long lastCheckTimeNanos;
     private long countSinceLastCheck;
 
-    private SimpleFrequencyLimiter(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
+    private PeriodicResetThrottler(final Invokable invokable, final double maxInvocationsPerSecond) {
         if (maxInvocationsPerSecond <= 0) {
             throw new IllegalArgumentException("maxInvocationsPerSecond must be positive: " + maxInvocationsPerSecond);
         }
         this.invokable = Objects.requireNonNull(invokable);
         this.nanosPerRun = TimeFactors.NANOS_PER_SECOND / maxInvocationsPerSecond;
         this.resetTimeNanos = Math.max((long)Math.ceil(nanosPerRun), DEFAULT_RESET_TIME_NANOS);
-        this.action = this::initialRun;
+        this.invokableWithInitializer = Invokable.withInitializer(this::initialRun, this::timedRun);
     }
 
     public static Runnable forRunnable(final Runnable runnable, final double maxInvocationsPerSecond) {
-        final BooleanSupplier booleanSupplier = forBooleanSupplier(() -> {
-            runnable.run();
-            return true;
-        }, maxInvocationsPerSecond);
-        return () -> booleanSupplier.getAsBoolean();
+        return forInvokable(Invokable.forRunnable(runnable), maxInvocationsPerSecond)::invoke;
     }
 
-    public static BooleanSupplier forBooleanSupplier(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
-        final SimpleFrequencyLimiter lim = new SimpleFrequencyLimiter(invokable, maxInvocationsPerSecond);
-        return () -> lim.action.getAsBoolean();
+    public static Invokable forInvokable(final Invokable invokable, final double maxInvocationsPerSecond) {
+        return new PeriodicResetThrottler(invokable, maxInvocationsPerSecond).invokableWithInitializer;
     }
 
     private boolean initialRun() {
         lastCheckTimeNanos = System.nanoTime();
         countSinceLastCheck = 0;
-        action = this::timedRun;
         return false;
     }
 
@@ -77,7 +70,7 @@ public class SimpleFrequencyLimiter {
         final double expectedDeltaTimeNanos = nanosPerRun * countSinceLastCheck;
         int inc = 0;
         if (deltaTimeNanos >= expectedDeltaTimeNanos) {
-            if (invokable.getAsBoolean()) {
+            if (invokable.invoke()) {
                 inc++;
             }
         }

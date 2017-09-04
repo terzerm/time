@@ -26,25 +26,25 @@ package org.tools4j.time.throttle;
 import org.tools4j.time.base.TimeFactors;
 
 import java.util.Objects;
-import java.util.function.BooleanSupplier;
+import java.util.concurrent.TimeUnit;
 
-public class SlidingCountWindowFrequencyLimiter {
+public class CountSlidingWindowThrottler {
 
     private static final int SLIDING_WINDOW_MIN_SIZE = 4;
     private static final int SLIDING_WINDOW_MAX_SIZE = 1024;
-    private static final long CYCLE_MIN_COUNT = 512;
+    private static final long CYCLE_MIN_COUNT = 1024;
     private static final long CYCLE_MIN_MILLIS = 20;
     private static final long CYCLE_MAX_MILLIS = 4000;
 
     private final long sliceMaxCount;
-    private final BooleanSupplier invokable;
+    private final Invokable invokable;
     private final double nanosPerRun;
     private final SlidingCountWindow slidingCountWindow;
 
-    private BooleanSupplier action;
+    private final Invokable invokableWithInitializer;
 
-    private SlidingCountWindowFrequencyLimiter(final BooleanSupplier invokable, final double maxInvocationsPerSecond,
-                                               final int slidingWindowSize, final long sliceMaxCount) {
+    private CountSlidingWindowThrottler(final Invokable invokable, final double maxInvocationsPerSecond,
+                                        final int slidingWindowSize, final long sliceMaxCount) {
         if (maxInvocationsPerSecond <= 0) {
             throw new IllegalArgumentException("maxInvocationsPerSecond must be positive: " + maxInvocationsPerSecond);
         }
@@ -54,32 +54,35 @@ public class SlidingCountWindowFrequencyLimiter {
         this.invokable = Objects.requireNonNull(invokable);
         this.nanosPerRun = TimeFactors.NANOS_PER_SECOND / maxInvocationsPerSecond;
         this.sliceMaxCount = sliceMaxCount;//Math.max(1, (long)Math.ceil(maxInvocationsPerSecond / slidingWindowSize));
-        this.action = this::initialRun;
+        this.invokableWithInitializer = Invokable.withInitializer(this::initialRun, this::timedRun);
         this.slidingCountWindow = new SlidingCountWindow(slidingWindowSize);
     }
 
     public static Runnable forRunnable(final Runnable runnable, final double maxInvocationsPerSecond) {
-        final BooleanSupplier booleanSupplier = forBooleanSupplier(() -> {
-            runnable.run();
-            return true;
-        }, maxInvocationsPerSecond);
-        return () -> booleanSupplier.getAsBoolean();
+        return forInvokable(Invokable.forRunnable(runnable), maxInvocationsPerSecond)::invoke;
     }
 
     public static Runnable forRunnable(final Runnable runnable, final double maxInvocationsPerSecond,
                                        final int slidingWindowSize, final long sliceMaxCount) {
-        final BooleanSupplier booleanSupplier = forBooleanSupplier(() -> {
-            runnable.run();
-            return true;
-        }, maxInvocationsPerSecond, slidingWindowSize, sliceMaxCount);
-        return () -> booleanSupplier.getAsBoolean();
+        return forInvokable(Invokable.forRunnable(runnable), maxInvocationsPerSecond, slidingWindowSize, sliceMaxCount)::invoke;
     }
 
-    public static BooleanSupplier forBooleanSupplier(final BooleanSupplier invokable, final double maxInvocationsPerSecond) {
+    public static Runnable forRunnable(final Runnable runnable, final double maxInvocationsPerSecond,
+                                       final long windowCycleTime, final TimeUnit cycleTimeUnit) {
+        return forInvokable(Invokable.forRunnable(runnable), maxInvocationsPerSecond, windowCycleTime, cycleTimeUnit)::invoke;
+    }
+
+    public static Invokable forInvokable(final Invokable invokable, final double maxInvocationsPerSecond) {
         final long cycleMillis = Math.min(
                 CYCLE_MAX_MILLIS,
                 Math.max(CYCLE_MIN_MILLIS, (long) (CYCLE_MIN_COUNT * 1000 / maxInvocationsPerSecond))
         );
+        return forInvokable(invokable, maxInvocationsPerSecond, cycleMillis, TimeUnit.MILLISECONDS);
+    }
+
+    public static Invokable forInvokable(final Invokable invokable, final double maxInvocationsPerSecond,
+                                         final long windowCycleTime, final TimeUnit cycleTimeUnit) {
+        final long cycleMillis = cycleTimeUnit.toMillis(windowCycleTime);
         final int slidingWindowSize = Math.min(
                 SLIDING_WINDOW_MAX_SIZE,
                 Math.max(SLIDING_WINDOW_MIN_SIZE, (int)Math.sqrt(maxInvocationsPerSecond * cycleMillis / 1000))
@@ -87,23 +90,17 @@ public class SlidingCountWindowFrequencyLimiter {
         final long slizeMaxCount = Math.max(1, (long)(maxInvocationsPerSecond * cycleMillis / 1000 / slidingWindowSize));
         //FIXME remove below line
         System.out.println("cycleMillis=" + cycleMillis + ", slidingWindowSize=" + slidingWindowSize + ", sliceMaxCount=" + slizeMaxCount);
-        return forBooleanSupplier(invokable, maxInvocationsPerSecond, slidingWindowSize, slizeMaxCount);
+        return forInvokable(invokable, maxInvocationsPerSecond, slidingWindowSize, slizeMaxCount);
     }
-
-    public static BooleanSupplier forBooleanSupplier(final BooleanSupplier invokable, final double maxInvocationsPerSecond,
-                                                     final int slidingWindowSize, final long sliceMaxCount) {
-        final SlidingCountWindowFrequencyLimiter lim = new SlidingCountWindowFrequencyLimiter(
-                invokable, maxInvocationsPerSecond, slidingWindowSize, sliceMaxCount);
-        return () -> lim.action.getAsBoolean();
-    }
-
-    private static double nanosPerRun(final double maxInvocationsPerSecond) {
-        return TimeFactors.NANOS_PER_SECOND / maxInvocationsPerSecond;
+    public static Invokable forInvokable(final Invokable invokable, final double maxInvocationsPerSecond,
+                                         final int slidingWindowSize, final long sliceMaxCount) {
+        return new CountSlidingWindowThrottler(
+                invokable, maxInvocationsPerSecond, slidingWindowSize, sliceMaxCount
+        ).invokableWithInitializer;
     }
 
     private boolean initialRun() {
         slidingCountWindow.init(System.nanoTime());
-        action = this::timedRun;
         return false;
     }
 
@@ -115,7 +112,7 @@ public class SlidingCountWindowFrequencyLimiter {
             slidingCountWindow.slide(nanoTime);
         }
         if (deltaTimeNanos >= expectedDeltaTimeNanos) {
-            if (invokable.getAsBoolean()) {
+            if (invokable.invoke()) {
                 slidingCountWindow.incrementCount();
                 return true;
             }
@@ -123,55 +120,4 @@ public class SlidingCountWindowFrequencyLimiter {
         return false;
     }
 
-    private static class SlidingCountWindow {
-        private final int n;
-        private long[] timeNanos;
-        private long[] count;
-        private int start;
-        private int end;
-        SlidingCountWindow(final int len) {
-            this.n = len + 1;
-            this.timeNanos = new long[n];
-            this.count = new long[n];
-        }
-        void init(final long nanoTime) {
-            timeNanos[0] = nanoTime;
-            count[0] = 0;
-            timeNanos[1] = nanoTime;
-            count[1] = 0;
-            start = 0;
-            end = 1;
-        }
-        void slide(final long nanoTime) {
-            final long cnt = count[end];
-            timeNanos[end] = nanoTime;
-            end = incrementIndex(end);
-            if (end == start) {
-                start = incrementIndex(start);
-            }
-            timeNanos[end] = nanoTime;
-            count[end] = cnt;
-
-        }
-        int incrementIndex(final int index) {
-            final int ix = index + 1;
-            return ix < n ? ix : 0;
-        }
-        int decrementIndex(final int index) {
-            final int ix = index - 1;
-            return ix >= 0 ? ix : n-1;
-        }
-        long windowTime(final long timeNanos) {
-            return timeNanos - this.timeNanos[start];
-        }
-        long windowCount() {
-            return count[end] - count[start];
-        }
-        void incrementCount() {
-            count[end]++;
-        }
-        long sliceCount() {
-            return count[end] - count[decrementIndex(end)];
-        }
-    }
 }
