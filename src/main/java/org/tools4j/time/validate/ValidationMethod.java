@@ -23,6 +23,8 @@
  */
 package org.tools4j.time.validate;
 
+import java.util.Objects;
+
 /**
  * Defines different methods to validate values.
  */
@@ -30,13 +32,40 @@ public enum ValidationMethod {
     /**
      * No validation is performed.
      */
-    UNVALIDATED,
+    UNVALIDATED(DateValidator.UNVALIDATED, TimeValidator.UNVALIDATED),
     /**
      * Validation is performed and failure is signalled by a special result value.
      */
-    INVALIDATE_RESULT,
+    INVALIDATE_RESULT(DateValidator.INVALIDATE_RESULT, TimeValidator.INVALIDATE_RESULT),
     /**
      * Validation is performed and failure is signalled through an exception.
      */
-    THROW_EXCEPTION;
+    THROW_EXCEPTION(DateValidator.THROW_EXCEPTION, TimeValidator.THROW_EXCEPTION);
+
+    private static final ValidationMethod[] VALUES = values();
+
+    private final DateValidator dateValidator;
+    private final TimeValidator timeValidator;
+
+    ValidationMethod(final DateValidator dateValidator, final TimeValidator timeValidator) {
+        this.dateValidator = Objects.requireNonNull(dateValidator);
+        this.timeValidator = Objects.requireNonNull(timeValidator);
+    }
+
+    public final DateValidator dateValidator() {
+        return dateValidator;
+    }
+
+    public final TimeValidator timeValidator() {
+        return timeValidator;
+    }
+
+    public static int length() {
+        return VALUES.length;
+    }
+
+    public static ValidationMethod valueByOrdinal(final int ordinal) {
+        return VALUES[ordinal];
+    }
+
 }

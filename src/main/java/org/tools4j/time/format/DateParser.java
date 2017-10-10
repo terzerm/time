@@ -145,7 +145,7 @@ public interface DateParser {
             final int year = toYear(source, reader, offset);
             final int month = toMonth(source, reader, offset);
             final int day = toDay(source, reader, offset);
-            return Epoch.toEpochDays(year, month, day);
+            return Epoch.valueOf(validationMethod()).toEpochDays(year, month, day);
         }
         @Override
         default long toEpochMillis(final CharSequence charSequence) {
@@ -167,10 +167,12 @@ public interface DateParser {
         default LocalDate toLocalDate(final CharSequence charSequence) {
             return toLocalDate(charSequence, CharReader.CHAR_SEQUENCE);
         }
+        @Garbage(Garbage.Type.RESULT)
         @Override
         default LocalDate toLocalDate(final CharSequence charSequence, final int offset) {
             return toLocalDate(charSequence, CharReader.CHAR_SEQUENCE, offset);
         }
+        @Garbage(Garbage.Type.RESULT)
         @Override
         default <S> LocalDate toLocalDate(final S source, final CharReader<? super S> reader) {
             return toLocalDate(source, reader, 0);
@@ -244,7 +246,7 @@ public interface DateParser {
             final int month = parser.toMonth(source, reader, offset);
             final int day = parser.toDay(source, reader, offset);
             if (validator.validateDay(year, month, day) != DateValidator.INVALID) {
-                return Epoch.toEpochDays(year, month, day);
+                return Epoch.valueOf(validationMethod()).toEpochDays(year, month, day);
             }
             return INVALID_EPOCH;
         }

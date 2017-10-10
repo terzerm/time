@@ -35,8 +35,7 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.tools4j.time.validate.ValidationMethod.INVALIDATE_RESULT;
 import static org.tools4j.time.validate.ValidationMethod.THROW_EXCEPTION;
 
@@ -118,7 +117,7 @@ public class MilliTimePackerTest {
             "|   -1 |     1  |      1 |     0 |",
             "|    0 |    -1  |      1 |     0 |",
             "|    0 |     0  |     -1 |     0 |",
-            "|    0 |     0  |      0 |    -1 |",
+            "|    1 |     0  |      0 |    -1 |",
             "|   24 |     0  |      1 |     0 |",
             "|    0 |    60  |      1 |     0 |",
             "|    0 |     1  |     60 |     0 |",
@@ -149,27 +148,71 @@ public class MilliTimePackerTest {
         }
 
         @Test(expected = DateTimeException.class)
-        public void unpackIllegalHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int milli) {
+        public void unpackIllegalLocalTimeBinary(final int hour, final int minute, final int second, final int milli) {
             final int packed = (hour << 22) | (minute << 16) | (second << 10) | milli;
             MilliTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
 
         @Test(expected = DateTimeException.class)
-        public void unpackInvalidHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int milli) {
+        public void unpackInvalidLocalTimeBinary(final int hour, final int minute, final int second, final int milli) {
             final int packed = (hour << 22) | (minute << 16) | (second << 10) | milli;
             MilliTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
         }
 
         @Test(expected = DateTimeException.class)
-        public void unpackIllegalHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
+        public void unpackIllegalLocalTimeDecimal(final int hour, final int minute, final int second, final int milli) {
             final int packed = hour * 10000000 + minute * 100000 + second * 1000 + milli;
             MilliTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
 
         @Test(expected = DateTimeException.class)
-        public void unpackInvalidHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
+        public void unpackInvalidLocalTimeDecimal(final int hour, final int minute, final int second, final int milli) {
             final int packed = hour * 10000000 + minute * 100000 + second * 1000 + milli;
             MilliTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
+        }
+
+        @Test(expected = DateTimeException.class)
+        public void unpackIllegalHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int milli) {
+            final int packed = MilliTimePacker.BINARY.pack(hour, minute, second, milli);
+            assertNotEquals("should not be invalid", DateTimePacker.INVALID, packed);
+            MilliTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackHour(packed);
+            MilliTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackMinute(packed);
+            MilliTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackSecond(packed);
+            MilliTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackMilli(packed);
+        }
+
+        @Test
+        public void unpackInvalidHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int milli) {
+            final int packed = MilliTimePacker.BINARY.pack(hour, minute, second, milli);
+            assertNotEquals("should not be invalid", DateTimePacker.INVALID, packed);
+            final int h = MilliTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackHour(packed);
+            final int m = MilliTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackMinute(packed);
+            final int s = MilliTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackSecond(packed);
+            final int l = MilliTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackMilli(packed);
+            final int inv = MilliTimePacker.INVALID;
+            assertTrue("at least one should be invalid", h == inv || m == inv || s == inv || l == inv);
+        }
+
+        @Test(expected = DateTimeException.class)
+        public void unpackIllegalHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
+            final int packed = MilliTimePacker.DECIMAL.pack(hour, minute, second, milli);
+            assertNotEquals("should not be invalid", DateTimePacker.INVALID, packed);
+            MilliTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackHour(packed);
+            MilliTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackMinute(packed);
+            MilliTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackSecond(packed);
+            MilliTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackMilli(packed);
+        }
+
+        @Test
+        public void unpackInvalidHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int milli) {
+            final int packed = MilliTimePacker.DECIMAL.pack(hour, minute, second, milli);
+            assertNotEquals("should not be invalid", DateTimePacker.INVALID, packed);
+            final int h = MilliTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackHour(packed);
+            final int m = MilliTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackMinute(packed);
+            final int s = MilliTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackSecond(packed);
+            final int l = MilliTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackMilli(packed);
+            final int inv = MilliTimePacker.INVALID;
+            assertTrue("at least one should be invalid", h == inv || m == inv || s == inv || l == inv);
         }
     }
 

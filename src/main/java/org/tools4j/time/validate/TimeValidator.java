@@ -188,16 +188,7 @@ public enum TimeValidator {
     public static final int NANO_MAX = NANOS_PER_SECOND - 1;
 
     public static TimeValidator valueOf(final ValidationMethod validationMethod) {
-        switch (validationMethod) {
-            case UNVALIDATED:
-                return UNVALIDATED;
-            case INVALIDATE_RESULT:
-                return INVALIDATE_RESULT;
-            case THROW_EXCEPTION:
-                return THROW_EXCEPTION;
-            default:
-                throw new IllegalArgumentException("Unsupported validate method: " + validationMethod);
-        }
+        return validationMethod.timeValidator();
     }
 
     public static boolean isValidHour(final int hour) {

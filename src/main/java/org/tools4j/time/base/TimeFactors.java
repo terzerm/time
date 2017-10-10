@@ -31,8 +31,9 @@ public final class TimeFactors {
     public static final int MICROS_PER_MILLI = 1000;
     public static final int NANOS_PER_MICRO = 1000;
 
-    public static final int MICROS_PER_SECOND = MICROS_PER_MILLI * MILLIS_PER_SECOND;
     public static final int NANOS_PER_MILLI = NANOS_PER_MICRO * MICROS_PER_MILLI;
+
+    public static final int MICROS_PER_SECOND = MICROS_PER_MILLI * MILLIS_PER_SECOND;
     public static final int NANOS_PER_SECOND = NANOS_PER_MICRO * MICROS_PER_SECOND;
 
     public static final int MILLIS_PER_MINUTE = MILLIS_PER_SECOND * SECONDS_PER_MINUTE;

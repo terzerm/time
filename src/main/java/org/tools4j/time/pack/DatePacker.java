@@ -50,6 +50,14 @@ public interface DatePacker {
     int packDaysSinceEpoch(long daysSinceEpoch);
     int packMillisSinceEpoch(long millisSinceEpoch);
 
+    static DatePacker valueOf(final Packing packing) {
+        return Instances.valueOf(packing, ValidationMethod.UNVALIDATED);
+    }
+
+    static DatePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
+        return Instances.valueOf(packing, validationMethod);
+    }
+
     interface Default extends DatePacker {
         @Override
         default int packNull() {
@@ -78,12 +86,12 @@ public interface DatePacker {
 
         @Override
         default int packDaysSinceEpoch(final long daysSinceEpoch) {
-            return Epoch.fromEpochDays(daysSinceEpoch, this);
+            return Epoch.valueOf(validationMethod()).fromEpochDays(daysSinceEpoch, this);
         }
 
         @Override
         default int packMillisSinceEpoch(final long millisSinceEpoch) {
-            return Epoch.fromEpochMillis(millisSinceEpoch, this);
+            return Epoch.valueOf(validationMethod()).fromEpochMillis(millisSinceEpoch, this);
         }
 
         @Override
@@ -143,12 +151,12 @@ public interface DatePacker {
 
         @Override
         public int pack(final int year, final int month, final int day) {
-            return (year * 10000) + (month * 100) + day;
+            return (year * 100_00) + (month * 100) + day;
         }
 
         @Override
         public int unpackYear(final int packed) {
-            return packed / 10000;
+            return packed / 100_00;
         }
 
         @Override
@@ -212,7 +220,7 @@ public interface DatePacker {
         public int unpackDay(final int packed) {
             final int year = packer.unpackYear(packed);
             final int month = packer.unpackMonth(packed);
-            final int day  = packer.unpackDay(packed);
+            final int day = packer.unpackDay(packed);
             return validator.validateDay(year, month, day);
         }
 
@@ -220,20 +228,29 @@ public interface DatePacker {
         public String toString() {
             return "DatePacker.Validated." + packer.packing();
         }
+
     }
 
+    final class Instances {
+        private static final DatePacker[][] BY_PACKING_AND_VALIDATION_METHOD = instancesByPackingAndValidationMethod();
 
-    static DatePacker valueOf(final Packing packing) {
-        return packing == Packing.BINARY ? BINARY : DECIMAL;
-    }
+        private static DatePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
+            return BY_PACKING_AND_VALIDATION_METHOD[packing.ordinal()][validationMethod.ordinal()];
+        }
 
-    @Garbage(Garbage.Type.RESULT)
-    static DatePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
-        switch (validationMethod) {
-            case UNVALIDATED:
-                return valueOf(packing);
-            default:
-                return new Validated(valueOf(packing), validationMethod);
+        private static DatePacker[][] instancesByPackingAndValidationMethod() {
+            final DatePacker[][] instances = new DatePacker[Packing.length()][ValidationMethod.length()];
+            final int vOrdUnvalidated = ValidationMethod.UNVALIDATED.ordinal();
+            instances[Packing.BINARY.ordinal()][vOrdUnvalidated] = BINARY;
+            instances[Packing.DECIMAL.ordinal()][vOrdUnvalidated] = DECIMAL;
+            for (int pOrd = 0; pOrd < Packing.length(); pOrd++) {
+                for (int vOrd = 0; vOrd < ValidationMethod.length(); vOrd++) {
+                    if (vOrd != vOrdUnvalidated) {
+                        instances[pOrd][vOrd] = new Validated(instances[pOrd][vOrdUnvalidated], ValidationMethod.valueByOrdinal(vOrd));
+                    }
+                }
+            }
+            return instances;
         }
     }
 

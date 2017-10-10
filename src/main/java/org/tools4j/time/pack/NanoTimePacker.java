@@ -53,6 +53,14 @@ public interface NanoTimePacker {
     long packMillisSinceEpoch(long millisSinceEpoch);
     long packNanosSinceEpoch(long nanosSinceEpoch);
 
+    static NanoTimePacker valueOf(final Packing packing) {
+        return Instances.valueOf(packing, ValidationMethod.UNVALIDATED);
+    }
+
+    static NanoTimePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
+        return Instances.valueOf(packing, validationMethod);
+    }
+
     interface Default extends NanoTimePacker {
         @Override
         default long packNull() {
@@ -79,12 +87,12 @@ public interface NanoTimePacker {
 
         @Override
         default long packMillisSinceEpoch(final long millisSinceEpoch) {
-            return Epoch.fromEpochMillis(millisSinceEpoch, this);
+            return Epoch.valueOf(validationMethod()).fromEpochMillis(millisSinceEpoch, this);
         }
 
         @Override
         default long packNanosSinceEpoch(final long nanosSinceEpoch) {
-            return Epoch.fromEpochNanos(nanosSinceEpoch, this);
+            return Epoch.valueOf(validationMethod()).fromEpochNanos(nanosSinceEpoch, this);
         }
 
         @Override
@@ -107,12 +115,12 @@ public interface NanoTimePacker {
 
         @Override
         public long pack(final int hour, final int minute, final int second, final int nano) {
-            return (((long)hour) << 42) | (((long)minute) << 36) | (((long)second) << 30) | nano;
+            return ((hour & 0x1fL) << 42) | ((minute & 0x3fL) << 36) | ((second & 0x3fL)  << 30) | (nano & 0x3fffffffL);
         }
 
         @Override
         public int unpackHour(final long packed) {
-            return (int)(packed >>> 42);
+            return (int)((packed >>> 42) & 0x1fL);
         }
 
         @Override
@@ -149,12 +157,12 @@ public interface NanoTimePacker {
 
         @Override
         public long pack(final int hour, final int minute, final int second, final int nano) {
-            return hour * (10000L * NANOS_PER_SECOND) + minute * (100L * NANOS_PER_SECOND) + second * ((long)NANOS_PER_SECOND) + nano;
+            return hour * (100_00L * NANOS_PER_SECOND) + minute * (100L * NANOS_PER_SECOND) + second * ((long)NANOS_PER_SECOND) + nano;
         }
 
         @Override
         public int unpackHour(final long packed) {
-            return (int)(packed / (10000L * NANOS_PER_SECOND));
+            return (int)(packed / (100_00L * NANOS_PER_SECOND));
         }
 
         @Override
@@ -235,17 +243,26 @@ public interface NanoTimePacker {
         }
     }
 
-    static NanoTimePacker valueOf(final Packing packing) {
-        return packing == Packing.BINARY ? BINARY : DECIMAL;
-    }
+    final class Instances {
+        private static final NanoTimePacker[][] BY_PACKING_AND_VALIDATION_METHOD = instancesByPackingAndValidationMethod();
 
-    @Garbage(Garbage.Type.RESULT)
-    static NanoTimePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
-        switch (validationMethod) {
-            case UNVALIDATED:
-                return valueOf(packing);
-            default:
-                return new Validated(valueOf(packing), validationMethod);
+        private static NanoTimePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
+            return BY_PACKING_AND_VALIDATION_METHOD[packing.ordinal()][validationMethod.ordinal()];
+        }
+
+        private static NanoTimePacker[][] instancesByPackingAndValidationMethod() {
+            final NanoTimePacker[][] instances = new NanoTimePacker[Packing.length()][ValidationMethod.length()];
+            final int vOrdUnvalidated = ValidationMethod.UNVALIDATED.ordinal();
+            instances[Packing.BINARY.ordinal()][vOrdUnvalidated] = BINARY;
+            instances[Packing.DECIMAL.ordinal()][vOrdUnvalidated] = DECIMAL;
+            for (int pOrd = 0; pOrd < Packing.length(); pOrd++) {
+                for (int vOrd = 0; vOrd < ValidationMethod.length(); vOrd++) {
+                    if (vOrd != vOrdUnvalidated) {
+                        instances[pOrd][vOrd] = new Validated(instances[pOrd][vOrdUnvalidated], ValidationMethod.valueByOrdinal(vOrd));
+                    }
+                }
+            }
+            return instances;
         }
     }
 }

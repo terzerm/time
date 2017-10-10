@@ -52,6 +52,14 @@ public interface TimePacker {
     int packSecondsSinceEpoch(long secondsSinceEpoch);
     int packMillisSinceEpoch(long millisSinceEpoch);
 
+    static TimePacker valueOf(final Packing packing) {
+        return Instances.valueOf(packing, ValidationMethod.UNVALIDATED);
+    }
+
+    static TimePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
+        return Instances.valueOf(packing, validationMethod);
+    }
+
     interface Default extends TimePacker {
         @Override
         default int packNull() {
@@ -78,7 +86,7 @@ public interface TimePacker {
 
         @Override
         default int packSecondsSinceEpoch(final long secondsSinceEpoch) {
-            return Epoch.fromEpochSeconds(secondsSinceEpoch, this);
+            return Epoch.valueOf(validationMethod()).fromEpochSeconds(secondsSinceEpoch, this);
         }
 
         @Override
@@ -106,12 +114,12 @@ public interface TimePacker {
 
         @Override
         public int pack(final int hour, final int minute, final int second) {
-            return (hour << 12) | (minute << 6) | second;
+            return ((hour & 0x1f) << 12) | ((minute & 0x3f) << 6) | (second & 0x3f);
         }
 
         @Override
         public int unpackHour(final int packed) {
-            return packed >>> 12;
+            return (packed >>> 12) & 0x1f;
         }
 
         @Override
@@ -218,17 +226,26 @@ public interface TimePacker {
         }
     }
 
-    static TimePacker valueOf(final Packing packing) {
-        return packing == Packing.BINARY ? BINARY : DECIMAL;
-    }
+    final class Instances {
+        private static final TimePacker[][] BY_PACKING_AND_VALIDATION_METHOD = instancesByPackingAndValidationMethod();
 
-    @Garbage(Garbage.Type.RESULT)
-    static TimePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
-        switch (validationMethod) {
-            case UNVALIDATED:
-                return valueOf(packing);
-            default:
-                return new Validated(valueOf(packing), validationMethod);
+        private static TimePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
+            return BY_PACKING_AND_VALIDATION_METHOD[packing.ordinal()][validationMethod.ordinal()];
+        }
+
+        private static TimePacker[][] instancesByPackingAndValidationMethod() {
+            final TimePacker[][] instances = new TimePacker[Packing.length()][ValidationMethod.length()];
+            final int vOrdUnvalidated = ValidationMethod.UNVALIDATED.ordinal();
+            instances[Packing.BINARY.ordinal()][vOrdUnvalidated] = BINARY;
+            instances[Packing.DECIMAL.ordinal()][vOrdUnvalidated] = DECIMAL;
+            for (int pOrd = 0; pOrd < Packing.length(); pOrd++) {
+                for (int vOrd = 0; vOrd < ValidationMethod.length(); vOrd++) {
+                    if (vOrd != vOrdUnvalidated) {
+                        instances[pOrd][vOrd] = new Validated(instances[pOrd][vOrdUnvalidated], ValidationMethod.valueByOrdinal(vOrd));
+                    }
+                }
+            }
+            return instances;
         }
     }
 }

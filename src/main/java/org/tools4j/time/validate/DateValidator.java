@@ -39,6 +39,11 @@ public enum DateValidator {
         }
 
         @Override
+        public int validateYear(final long year) {
+            return (int)year;
+        }
+
+        @Override
         public int validateYear(final int year) {
             return year;
         }
@@ -63,6 +68,11 @@ public enum DateValidator {
         }
 
         @Override
+        public int validateYear(final long year) {
+            return DateValidator.isValidYear(year) ? (int)year : INVALID;
+        }
+
+        @Override
         public int validateYear(final int year) {
             return DateValidator.isValidYear(year) ? year : INVALID;
         }
@@ -84,6 +94,14 @@ public enum DateValidator {
         @Override
         public ValidationMethod validationMethod() {
             return ValidationMethod.THROW_EXCEPTION;
+        }
+
+        @Override
+        public int validateYear(final long year) {
+            if (DateValidator.isValidYear(year)) {
+                return (int)year;
+            }
+            throw new DateTimeException("Invalid year, must be in [1,9999] but was: " + year);
         }
 
         @Override
@@ -124,16 +142,11 @@ public enum DateValidator {
     public static final int DAY_MAX = 31;
 
     public static DateValidator valueOf(final ValidationMethod validationMethod) {
-        switch (validationMethod) {
-            case UNVALIDATED:
-                return UNVALIDATED;
-            case INVALIDATE_RESULT:
-                return INVALIDATE_RESULT;
-            case THROW_EXCEPTION:
-                return THROW_EXCEPTION;
-            default:
-                throw new IllegalArgumentException("Unsupported validate method: " + validationMethod);
-        }
+        return validationMethod.dateValidator();
+    }
+
+    public static boolean isValidYear(final long year) {
+        return YEAR_MIN <= year & year <= YEAR_MAX;
     }
 
     public static boolean isValidYear(final int year) {
@@ -152,6 +165,8 @@ public enum DateValidator {
     }
 
     abstract public ValidationMethod validationMethod();
+
+    abstract public int validateYear(long year);
 
     abstract public int validateYear(int year);
 

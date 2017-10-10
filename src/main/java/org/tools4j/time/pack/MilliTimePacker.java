@@ -53,6 +53,14 @@ public interface MilliTimePacker {
     LocalTime unpackLocalTime(int packed);
     int packMillisSinceEpoch(long millisSinceEpoch);
 
+    static MilliTimePacker valueOf(final Packing packing) {
+        return Instances.valueOf(packing, ValidationMethod.UNVALIDATED);
+    }
+
+    static MilliTimePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
+        return Instances.valueOf(packing, validationMethod);
+    }
+
     interface Default extends MilliTimePacker {
         @Override
         default int packNull() {
@@ -81,7 +89,7 @@ public interface MilliTimePacker {
 
         @Override
         default int packMillisSinceEpoch(final long millisSinceEpoch) {
-            return Epoch.fromEpochMillis(millisSinceEpoch, this);
+            return Epoch.valueOf(validationMethod()).fromEpochMillis(millisSinceEpoch, this);
         }
 
         @Override
@@ -104,12 +112,12 @@ public interface MilliTimePacker {
 
         @Override
         public int pack(final int hour, final int minute, final int second, final int milli) {
-            return (hour << 22) | (minute << 16) | (second << 10) | milli;
+            return ((hour & 0x1f) << 22) | ((minute & 0x3f) << 16) | ((second & 0x3f)  << 10) | (milli & 0x3ff);
         }
 
         @Override
         public int unpackHour(final int packed) {
-            return packed >>> 22;
+            return (packed >>> 22) & 0x1f;
         }
 
         @Override
@@ -146,17 +154,17 @@ public interface MilliTimePacker {
 
         @Override
         public int pack(final int hour, final int minute, final int second, final int milli) {
-            return hour * 10000000 + minute * 100000 + second * 1000 + milli;
+            return hour * 100_00_000 + minute * 100_000 + second * 1000 + milli;
         }
 
         @Override
         public int unpackHour(final int packed) {
-            return packed / 10000000;
+            return packed / 100_00_000;
         }
 
         @Override
         public int unpackMinute(final int packed) {
-            return (packed / 100000) % 100;
+            return (packed / 100_000) % 100;
         }
 
         @Override
@@ -232,17 +240,26 @@ public interface MilliTimePacker {
         }
     }
 
-    static MilliTimePacker valueOf(final Packing packing) {
-        return packing == Packing.BINARY ? BINARY : DECIMAL;
-    }
+    final class Instances {
+        private static final MilliTimePacker[][] BY_PACKING_AND_VALIDATION_METHOD = instancesByPackingAndValidationMethod();
 
-    @Garbage(Garbage.Type.RESULT)
-    static MilliTimePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
-        switch (validationMethod) {
-            case UNVALIDATED:
-                return valueOf(packing);
-            default:
-                return new Validated(valueOf(packing), validationMethod);
+        private static MilliTimePacker valueOf(final Packing packing, final ValidationMethod validationMethod) {
+            return BY_PACKING_AND_VALIDATION_METHOD[packing.ordinal()][validationMethod.ordinal()];
+        }
+
+        private static MilliTimePacker[][] instancesByPackingAndValidationMethod() {
+            final MilliTimePacker[][] instances = new MilliTimePacker[Packing.length()][ValidationMethod.length()];
+            final int vOrdUnvalidated = ValidationMethod.UNVALIDATED.ordinal();
+            instances[Packing.BINARY.ordinal()][vOrdUnvalidated] = BINARY;
+            instances[Packing.DECIMAL.ordinal()][vOrdUnvalidated] = DECIMAL;
+            for (int pOrd = 0; pOrd < Packing.length(); pOrd++) {
+                for (int vOrd = 0; vOrd < ValidationMethod.length(); vOrd++) {
+                    if (vOrd != vOrdUnvalidated) {
+                        instances[pOrd][vOrd] = new Validated(instances[pOrd][vOrdUnvalidated], ValidationMethod.valueByOrdinal(vOrd));
+                    }
+                }
+            }
+            return instances;
         }
     }
 }
