@@ -257,7 +257,7 @@ public class DateTimePackerTest {
             final int m = DateTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackMinute(packed);
             final int s = DateTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackSecond(packed);
             final int l = DateTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackMilli(packed);
-            final int inv = MilliTimePacker.INVALID;
+            final long inv = DateTimePacker.INVALID;
             assertTrue("at least one should be invalid", d == inv || h == inv || m == inv || s == inv || l == inv);
         }
 
@@ -282,7 +282,7 @@ public class DateTimePackerTest {
             final int m = DateTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackMinute(packed);
             final int s = DateTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackSecond(packed);
             final int l = DateTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackMilli(packed);
-            final int inv = MilliTimePacker.INVALID;
+            final long inv = DateTimePacker.INVALID;
             assertTrue("at least one should be invalid", d == inv || h == inv || m == inv || s == inv || l == inv);
         }
 

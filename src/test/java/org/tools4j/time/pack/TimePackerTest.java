@@ -34,8 +34,7 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.tools4j.time.validate.ValidationMethod.INVALIDATE_RESULT;
 import static org.tools4j.time.validate.ValidationMethod.THROW_EXCEPTION;
 
@@ -125,7 +124,7 @@ public class TimePackerTest {
             "| hour | minute | second |",
             "|   -1 |     1  |      1 |",
             "|    0 |    -1  |      1 |",
-            "|    0 |     0  |     -1 |",
+            "|    0 |     0  |     -2 |",
             "|   24 |     0  |      1 |",
             "|    0 |    60  |      1 |",
             "|    0 |     1  |     60 |",
@@ -155,27 +154,71 @@ public class TimePackerTest {
         }
 
         @Test(expected = DateTimeException.class)
-        public void unpackIllegalHourMinuteSecondBinary(final int hour, final int minute, final int second) {
-            final int packed = (hour << 12) | (minute << 6) | second;
+        public void unpackIllegalLocalTimeBinary(final int hour, final int minute, final int second) {
+            final int packed = TimePacker.BINARY.pack(hour, minute, second);
+            assertNotEquals("should not be invalid", TimePacker.INVALID, packed);
             TimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
 
         @Test(expected = DateTimeException.class)
-        public void unpackInvalidHourMinuteSecondBinary(final int hour, final int minute, final int second) {
-            final int packed = (hour << 12) | (minute << 6) | second;
+        public void unpackInvalidLocalTimeBinary(final int hour, final int minute, final int second) {
+            final int packed = TimePacker.BINARY.pack(hour, minute, second);
+            assertNotEquals("should not be invalid", TimePacker.INVALID, packed);
             TimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
         }
 
         @Test(expected = DateTimeException.class)
-        public void unpackIllegalHourMinuteSecondDecimal(final int hour, final int minute, final int second) {
-            final int packed = hour * 10000 + minute * 100 + second;
+        public void unpackIllegalLocalTimeDecimal(final int hour, final int minute, final int second) {
+            final int packed = TimePacker.DECIMAL.pack(hour, minute, second);
+            assertNotEquals("should not be invalid", TimePacker.INVALID, packed);
             TimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
 
         @Test(expected = DateTimeException.class)
-        public void unpackInvalidHourMinuteSecondDecimal(final int hour, final int minute, final int second) {
-            final int packed = hour * 10000 + minute * 100 + second;
+        public void unpackInvalidLocalTimeDecimal(final int hour, final int minute, final int second) {
+            final int packed = TimePacker.DECIMAL.pack(hour, minute, second);
+            assertNotEquals("should not be invalid", TimePacker.INVALID, packed);
             TimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
+        }
+
+        @Test(expected = DateTimeException.class)
+        public void unpackIllegalHourMinuteSecondMilliBinary(final int hour, final int minute, final int second) {
+            final int packed = TimePacker.BINARY.pack(hour, minute, second);
+            assertNotEquals("should not be invalid", TimePacker.INVALID, packed);
+            TimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackHour(packed);
+            TimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackMinute(packed);
+            TimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackSecond(packed);
+        }
+
+        @Test
+        public void unpackInvalidHourMinuteSecondMilliBinary(final int hour, final int minute, final int second) {
+            final int packed = TimePacker.BINARY.pack(hour, minute, second);
+            assertNotEquals("should not be invalid", TimePacker.INVALID, packed);
+            final int h = TimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackHour(packed);
+            final int m = TimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackMinute(packed);
+            final int s = TimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackSecond(packed);
+            final int inv = TimePacker.INVALID;
+            assertTrue("at least one should be invalid", h == inv || m == inv || s == inv);
+        }
+
+        @Test(expected = DateTimeException.class)
+        public void unpackIllegalHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second) {
+            final int packed = TimePacker.DECIMAL.pack(hour, minute, second);
+            assertNotEquals("should not be invalid", TimePacker.INVALID, packed);
+            TimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackHour(packed);
+            TimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackMinute(packed);
+            TimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackSecond(packed);
+        }
+
+        @Test
+        public void unpackInvalidHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second) {
+            final int packed = TimePacker.DECIMAL.pack(hour, minute, second);
+            assertNotEquals("should not be invalid", TimePacker.INVALID, packed);
+            final int h = TimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackHour(packed);
+            final int m = TimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackMinute(packed);
+            final int s = TimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackSecond(packed);
+            final int inv = TimePacker.INVALID;
+            assertTrue("at least one should be invalid", h == inv || m == inv || s == inv);
         }
     }
 

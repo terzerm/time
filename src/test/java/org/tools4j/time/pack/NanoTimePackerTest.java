@@ -33,6 +33,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.tools4j.time.validate.ValidationMethod.INVALIDATE_RESULT;
 import static org.tools4j.time.validate.ValidationMethod.THROW_EXCEPTION;
@@ -130,7 +131,7 @@ public class NanoTimePackerTest {
             "|   -1 |     1  |      1 |          0 |",
             "|    0 |    -1  |      1 |          0 |",
             "|    0 |     0  |     -1 |          0 |",
-            "|    0 |     0  |      0 |         -1 |",
+            "|    0 |     0  |      0 |         -2 |",
             "|   24 |     0  |      1 |          0 |",
             "|    0 |    60  |      1 |          0 |",
             "|    0 |     1  |     60 |          0 |",
@@ -161,27 +162,75 @@ public class NanoTimePackerTest {
         }
 
         @Test(expected = DateTimeException.class)
-        public void unpackIllegalHourMinuteSecondNanoBinary(final int hour, final int minute, final int second, final int nano) {
-            final long packed = (((long)hour) << 42) | (((long)minute) << 36) | (((long)second) << 30) | nano;
+        public void unpackIllegalLocalTimeBinary(final int hour, final int minute, final int second, final int nano) {
+            final long packed = NanoTimePacker.BINARY.pack(hour, minute, second, nano);
+            assertNotEquals("should not be invalid", NanoTimePacker.INVALID, packed);
             NanoTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
 
         @Test(expected = DateTimeException.class)
-        public void unpackInvalidHourMinuteSecondNanoBinary(final int hour, final int minute, final int second, final int nano) {
-            final long packed = (((long)hour) << 42) | (((long)minute) << 36) | (((long)second) << 30) | nano;
+        public void unpackInvalidLocalTimeBinary(final int hour, final int minute, final int second, final int nano) {
+            final long packed = NanoTimePacker.BINARY.pack(hour, minute, second, nano);
+            assertNotEquals("should not be invalid", NanoTimePacker.INVALID, packed);
             NanoTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
         }
 
         @Test(expected = DateTimeException.class)
-        public void unpackIllegalHourMinuteSecondNanoDecimal(final int hour, final int minute, final int second, final int nano) {
-            final long packed = hour * 10000000000000L + minute * 100000000000L + second * 1000000000L + nano;
+        public void unpackIllegalLocalTimeDecimal(final int hour, final int minute, final int second, final int nano) {
+            final long packed = NanoTimePacker.DECIMAL.pack(hour, minute, second, nano);
+            assertNotEquals("should not be invalid", NanoTimePacker.INVALID, packed);
             NanoTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackLocalTime(packed);
         }
 
         @Test(expected = DateTimeException.class)
-        public void unpackInvalidHourMinuteSecondNanoDecimal(final int hour, final int minute, final int second, final int nano) {
-            final long packed = hour * 10000000000000L + minute * 100000000000L + second * 1000000000L + nano;
+        public void unpackInvalidLocalTimeDecimal(final int hour, final int minute, final int second, final int nano) {
+            final long packed = NanoTimePacker.DECIMAL.pack(hour, minute, second, nano);
+            assertNotEquals("should not be invalid", NanoTimePacker.INVALID, packed);
             NanoTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackLocalTime(packed);
+        }
+
+        @Test(expected = DateTimeException.class)
+        public void unpackIllegalHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int nano) {
+            final long packed = NanoTimePacker.BINARY.pack(hour, minute, second, nano);
+            assertNotEquals("should not be invalid", NanoTimePacker.INVALID, packed);
+            NanoTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackHour(packed);
+            NanoTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackMinute(packed);
+            NanoTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackSecond(packed);
+            NanoTimePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackNano(packed);
+        }
+
+        @Test
+        public void unpackInvalidHourMinuteSecondMilliBinary(final int hour, final int minute, final int second, final int nano) {
+            final long packed = NanoTimePacker.BINARY.pack(hour, minute, second, nano);
+            assertNotEquals("should not be invalid", NanoTimePacker.INVALID, packed);
+            final int h = NanoTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackHour(packed);
+            final int m = NanoTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackMinute(packed);
+            final int s = NanoTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackSecond(packed);
+            final int n = NanoTimePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackNano(packed);
+            final long inv = NanoTimePacker.INVALID;
+            assertTrue("at least one should be invalid", h == inv || m == inv || s == inv || n == inv);
+        }
+
+        @Test(expected = DateTimeException.class)
+        public void unpackIllegalHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int nano) {
+            final long packed = NanoTimePacker.DECIMAL.pack(hour, minute, second, nano);
+            assertNotEquals("should not be invalid", NanoTimePacker.INVALID, packed);
+            NanoTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackHour(packed);
+            NanoTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackMinute(packed);
+            NanoTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackSecond(packed);
+            NanoTimePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackNano(packed);
+        }
+
+        @Test
+        public void unpackInvalidHourMinuteSecondMilliDecimal(final int hour, final int minute, final int second, final int nano) {
+            final long packed = NanoTimePacker.DECIMAL.pack(hour, minute, second, nano);
+            assertNotEquals("should not be invalid", NanoTimePacker.INVALID, packed);
+            final int h = NanoTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackHour(packed);
+            final int m = NanoTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackMinute(packed);
+            final int s = NanoTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackSecond(packed);
+            final int l = NanoTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackNano(packed);
+            final long inv = NanoTimePacker.INVALID;
+            assertTrue("at least one should be invalid", h == inv || m == inv || s == inv || l == inv);
         }
     }
 

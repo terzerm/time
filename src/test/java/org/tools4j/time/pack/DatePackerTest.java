@@ -189,8 +189,8 @@ public class DatePackerTest {
         @Test
         public void unpackInvalidYearMonthDayBinary(final int year, final int month, final int day) {
             final int packed = DatePacker.BINARY.pack(year, month, day);
-            final int invalid = DatePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackDay(packed);
             assertNotEquals("should not be invalid", DatePacker.INVALID, packed);
+            final int invalid = DatePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackDay(packed);
             assertEquals("should be invalid", DatePacker.INVALID, invalid);
         }
 
@@ -203,8 +203,8 @@ public class DatePackerTest {
         @Test
         public void unpackInvalidYearMonthDayDecimal(final int year, final int month, final int day) {
             final int packed = DatePacker.DECIMAL.pack(year, month, day);
-            final int invalid = DatePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackDay(packed);
             assertNotEquals("should not be invalid", DatePacker.INVALID, packed);
+            final int invalid = DatePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackDay(packed);
             assertEquals("should be invalid", DatePacker.INVALID, invalid);
         }
     }
