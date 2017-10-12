@@ -49,10 +49,10 @@ public enum DateFormat {
     private final int offsetSeparatorTwo;
 
     DateFormat(final int offsetYear,
-                       final int offsetMonth,
-                       final int offsetDay,
-                       final int offsetSeparatorOne,
-                       final int offsetSeparatorTwo) {
+               final int offsetMonth,
+               final int offsetDay,
+               final int offsetSeparatorOne,
+               final int offsetSeparatorTwo) {
         this.offsetYear = offsetYear;
         this.offsetMonth = offsetMonth;
         this.offsetDay = offsetDay;

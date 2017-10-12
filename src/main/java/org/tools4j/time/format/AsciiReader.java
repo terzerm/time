@@ -27,12 +27,12 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 
 @FunctionalInterface
-public interface CharReader<S> {
-    char readChar(S source, int index);
+public interface AsciiReader<S> {
+    byte readChar(S source, int index);
 
-    CharReader<CharSequence> CHAR_SEQUENCE = (s, i) -> s.charAt(i);
-    CharReader<char[]> CHAR_ARRAY = (a, i) -> a[i];
-    CharReader<byte[]> BYTE_ARRAY = (a, i) -> (char)a[i];
-    CharReader<CharBuffer> CHAR_BUFFER = (b, i) -> b.get(i);
-    CharReader<ByteBuffer> BYTE_BUFFER = (b, i) -> (char)b.get(i);
+    AsciiReader<CharSequence> CHAR_SEQUENCE = (s, i) -> (byte)s.charAt(i);
+    AsciiReader<char[]> CHAR_ARRAY = (a, i) -> (byte)a[i];
+    AsciiReader<byte[]> BYTE_ARRAY = (a, i) -> a[i];
+    AsciiReader<CharBuffer> CHAR_BUFFER = (b, i) -> (byte)b.get(i);
+    AsciiReader<ByteBuffer> BYTE_BUFFER = (b, i) -> b.get(i);
 }

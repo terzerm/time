@@ -33,7 +33,7 @@ import java.util.Objects;
 import static java.lang.Math.floorDiv;
 import static java.lang.Math.floorMod;
 
-final class DefaultEpoch implements Epoch.Default {
+final class EpochImpl implements Epoch.Default {
 
     /**
      * The number of days in a 400 year cycle.
@@ -47,11 +47,11 @@ final class DefaultEpoch implements Epoch.Default {
      */
     private static final long DAYS_0000_TO_1970 = (DAYS_PER_CYCLE * 5L) - (30L * 365L + 7L);
 
-    private static final DefaultEpoch[] INSTANCES = initInstances();
+    private static final EpochImpl[] INSTANCES = initInstances();
 
     private final ValidationMethod validationMethod;
 
-    DefaultEpoch(final ValidationMethod validationMethod) {
+    EpochImpl(final ValidationMethod validationMethod) {
         this.validationMethod = Objects.requireNonNull(validationMethod);
     }
 
@@ -124,7 +124,7 @@ final class DefaultEpoch implements Epoch.Default {
         return "Epoch." + validationMethod();
     }
 
-    static DefaultEpoch valueOf(final ValidationMethod validationMethod) {
+    static EpochImpl valueOf(final ValidationMethod validationMethod) {
         return INSTANCES[validationMethod.ordinal()];
     }
 
@@ -136,10 +136,10 @@ final class DefaultEpoch implements Epoch.Default {
         return (int) floorMod(floorDiv(value, divisor), moduloDivisor);
     }
 
-    private static final DefaultEpoch[] initInstances() {
-        final DefaultEpoch[] instances = new DefaultEpoch[ValidationMethod.length()];
+    private static final EpochImpl[] initInstances() {
+        final EpochImpl[] instances = new EpochImpl[ValidationMethod.length()];
         for (int ordinal = 0; ordinal < instances.length; ordinal++) {
-            instances[ordinal] = new DefaultEpoch(ValidationMethod.valueByOrdinal(ordinal));
+            instances[ordinal] = new EpochImpl(ValidationMethod.valueByOrdinal(ordinal));
         }
         return instances;
     }

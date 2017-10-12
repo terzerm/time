@@ -23,24 +23,24 @@
  */
 package org.tools4j.time.format;
 
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
+final class Ascii {
 
-@FunctionalInterface
-public interface CharWriter<T> {
-    void writeChar(T target, int index, char value);
+    static byte validateSeparatorChar(final char separator) {
+        if (separator >= 0 & separator <= Byte.MAX_VALUE) {
+            return (byte)separator;
+        }
+        throw new IllegalArgumentException("Illegal separator char: " + separator);
+    }
 
-    CharWriter<StringBuilder> STRING_BUILDER = (s, i, v) -> {
-        s.setLength(Math.max(i + 1, s.length()));
-        s.setCharAt(i, v);
-    };
+    static int digit(final byte ch) {
+        return ch - '0';
+    }
 
-    CharWriter<StringBuffer> STRING_BUFFER = (s, i, v) -> {
-        s.setLength(Math.max(i + 1, s.length()));
-        s.setCharAt(i, v);
-    };
-    CharWriter<char[]> CHAR_ARRAY = (a, i, v) -> a[i] = v;
-    CharWriter<byte[]> BYTE_ARRAY = (a, i, v) -> a[i] = (byte)v;
-    CharWriter<CharBuffer> CHAR_BUFFER = (b, i, v) -> b.put(i, v);
-    CharWriter<ByteBuffer> BYTE_BUFFER = (b, i, v) -> b.put(i, (byte)v);
+    static boolean isDigit(final byte ch) {
+        return '0' <= ch & ch <= '9';
+    }
+
+    private Ascii() {
+        throw new RuntimeException("No Ascii for you!");
+    }
 }

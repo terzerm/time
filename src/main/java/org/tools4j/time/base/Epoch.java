@@ -28,7 +28,7 @@ import org.tools4j.time.validate.DateValidator;
 import org.tools4j.time.validate.TimeValidator;
 import org.tools4j.time.validate.ValidationMethod;
 
-import static org.tools4j.time.base.DefaultEpoch.divMod;
+import static org.tools4j.time.base.EpochImpl.divMod;
 
 /**
  * Converts dates to days since epoch and vice versa.
@@ -68,7 +68,7 @@ public interface Epoch {
     long fromEpochMillis(long millisSinceEpoch, DateTimePacker dateTimePacker);
 
     static Epoch valueOf(final ValidationMethod validationMethod) {
-        return DefaultEpoch.valueOf(validationMethod);
+        return EpochImpl.valueOf(validationMethod);
     }
 
     interface Default extends Epoch {
