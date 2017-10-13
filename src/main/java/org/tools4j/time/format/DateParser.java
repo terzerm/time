@@ -35,7 +35,7 @@ public interface DateParser {
     int INVALID = DateValidator.INVALID;
     long INVALID_EPOCH = DateValidator.INVALID_EPOCH;
     byte INVAILD_SEPARATOR = -1;
-    byte NO_SEPARATOR = Byte.MIN_VALUE;
+    char NO_SEPARATOR = Ascii.NO_SEPARATOR;
     DateFormat format();
     ValidationMethod validationMethod();
     int toYear(CharSequence charSequence);
@@ -78,6 +78,52 @@ public interface DateParser {
     boolean isValid(CharSequence charSequence, int offset);
     <S> boolean isValid(S source, AsciiReader<? super S> reader);
     <S> boolean isValid(S source, AsciiReader<? super S> reader, int offset);
+
+    /**
+     * Returns a date parser for the specified format which performs no validation.
+     * @param format the date format
+     * @return a cached parser instance
+     */
+    static DateParser valueOf(final DateFormat format) {
+        return valueOf(format, ValidationMethod.UNVALIDATED);
+    }
+
+    /**
+     * Returns a date parser for the specified format and separator charactor which performs no validation.
+     * @param format the date format
+     * @param separatorChar the character separating date parts, e.g. '-' in '20170-07-31';
+     *                      ignored if format has no separator characters
+     * @return a cached parser instance for {@link #NO_SEPARATOR} or standard separators '-', '/' and '.'; and otherwise
+     *         a newly created parser instance
+     */
+    @Garbage(value = Garbage.Type.RESULT, rare = true, text="new instance only for format with non-standard separator char")
+    static DateParser valueOf(final DateFormat format, final char separatorChar) {
+        return valueOf(format, separatorChar, ValidationMethod.UNVALIDATED);
+    }
+
+    /**
+     * Returns a date parser for the specified format and validation method.
+     * @param format the date format
+     * @param validationMethod the type of date validation to perform
+     * @return a cached parser instance
+     */
+    static DateParser valueOf(final DateFormat format, final ValidationMethod validationMethod) {
+        return valueOf(format, '-', validationMethod);
+    }
+
+    /**
+     * Returns a date parser for the specified format, separator charactor and validation method
+     * @param format the date format
+     * @param separatorChar the character separating date parts, e.g. '-' in '20170-07-31';
+     *                      ignored if format has no separator characters
+     * @param validationMethod the type of date validation to perform
+     * @return a cached parser instance for {@link #NO_SEPARATOR} or standard separators '-', '/' and '.'; and otherwise
+     *         a newly created parser instance
+     */
+    @Garbage(value = Garbage.Type.RESULT, rare = true, text="new instance only for format with non-standard separator char")
+    static DateParser valueOf(final DateFormat format, final char separatorChar, final ValidationMethod validationMethod) {
+        return Instances.valueOf(format, separatorChar, validationMethod);
+    }
 
     interface Default extends DateParser {
         @Override
@@ -193,6 +239,53 @@ public interface DateParser {
         @Override
         default <S> boolean isValid(final S source, final AsciiReader<? super S> reader) {
             return isValid(source, reader, 0);
+        }
+    }
+
+    /**
+     * Helper class that manages instances of time packers.
+     */
+    final class Instances {
+        private static final DateParser[][] BY_FORMAT_AND_VALIDATION_METHOD_NONE = instancesByFormatAndValidationMethod(NO_SEPARATOR);
+        private static final DateParser[][] BY_FORMAT_AND_VALIDATION_METHOD_DASH = instancesByFormatAndValidationMethod('-');
+        private static final DateParser[][] BY_FORMAT_AND_VALIDATION_METHOD_SLASH = instancesByFormatAndValidationMethod('/');
+        private static final DateParser[][] BY_FORMAT_AND_VALIDATION_METHOD_DOT = instancesByFormatAndValidationMethod('.');
+
+        private static DateParser valueOf(final DateFormat format, final char separatorChar,
+                                          final ValidationMethod validationMethod) {
+            if (!format.hasSeparators() | separatorChar == NO_SEPARATOR) {
+                return BY_FORMAT_AND_VALIDATION_METHOD_NONE[format.ordinal()][validationMethod.ordinal()];
+            }
+            if (separatorChar == '-') {
+                return BY_FORMAT_AND_VALIDATION_METHOD_DASH[format.ordinal()][validationMethod.ordinal()];
+            }
+            if (separatorChar == '/') {
+                return BY_FORMAT_AND_VALIDATION_METHOD_SLASH[format.ordinal()][validationMethod.ordinal()];
+            }
+            if (separatorChar == '.') {
+                return BY_FORMAT_AND_VALIDATION_METHOD_DOT[format.ordinal()][validationMethod.ordinal()];
+            }
+            return create(format, separatorChar, validationMethod);
+        }
+
+        private static DateParser[][] instancesByFormatAndValidationMethod(final char separatorChar) {
+            final DateParser[][] instances = new DateParser[Packing.count()][ValidationMethod.count()];
+            for (int fOrd = 0; fOrd < DateFormat.count(); fOrd++) {
+                final DateFormat format = DateFormat.valueByOrdinal(fOrd);
+                if (format.hasSeparators() | separatorChar != NO_SEPARATOR) {
+                    for (int vOrd = 0; vOrd < ValidationMethod.count(); vOrd++) {
+                        final ValidationMethod validationMethod = ValidationMethod.valueByOrdinal(vOrd);
+                        instances[fOrd][vOrd] = create(format, separatorChar, validationMethod);
+                    }
+                }
+            }
+            return instances;
+        }
+
+        private static DateParser create(final DateFormat format, final char separatorChar,
+                                         final ValidationMethod validationMethod) {
+            return validationMethod == ValidationMethod.UNVALIDATED ? new SimpleDateParser(format, separatorChar) :
+                    new ValidatingDateParser(format, separatorChar, validationMethod);
         }
     }
 }

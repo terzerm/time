@@ -23,6 +23,8 @@
  */
 package org.tools4j.time.format;
 
+import java.util.function.Consumer;
+
 /**
  * Constants for common date formats of fixed length. The format defines the ordering
  * of the date components and the position of the separator characters (if any), but not
@@ -99,5 +101,32 @@ public enum DateFormat {
     /** @return the length of a string formatted according to this date format */
     public final int length() {
         return hasSeparators() ? 10 : 8;
+    }
+
+    private static DateFormat[] VALUES = values();
+
+    /** @return the number of date formats available */
+    public static final int count() {
+        return VALUES.length;
+    }
+
+    /**
+     * @param ordinal the zero based format index or {@link #ordinal()}
+     * @return the constant for the specified ordinal
+     * @throws ArrayIndexOutOfBoundsException if ordinal is out of bounds
+     * @see #count()
+     */
+    public static final DateFormat valueByOrdinal(final int ordinal) {
+        return VALUES[ordinal];
+    }
+
+    /**
+     * Invokes the specified consumer for each of the constants.
+     * @param consumer the consumer to invoke for every constant
+     */
+    public static final void forEach(final Consumer<? super DateFormat> consumer) {
+        for (final DateFormat packing : VALUES) {
+            consumer.accept(packing);
+        }
     }
 }

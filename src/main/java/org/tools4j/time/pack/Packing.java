@@ -45,7 +45,7 @@ public enum Packing {
 
     private static Packing[] VALUES = values();
 
-    public static final int length() {
+    public static final int count() {
         return VALUES.length;
     }
 

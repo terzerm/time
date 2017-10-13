@@ -137,7 +137,7 @@ final class EpochImpl implements Epoch.Default {
     }
 
     private static final EpochImpl[] initInstances() {
-        final EpochImpl[] instances = new EpochImpl[ValidationMethod.length()];
+        final EpochImpl[] instances = new EpochImpl[ValidationMethod.count()];
         for (int ordinal = 0; ordinal < instances.length; ordinal++) {
             instances[ordinal] = new EpochImpl(ValidationMethod.valueByOrdinal(ordinal));
         }

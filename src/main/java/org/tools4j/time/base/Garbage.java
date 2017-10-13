@@ -29,7 +29,13 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Garbage {
+    /** @return the type of garbage */
     Type value();
+    /** @return if true then garbage is rare, for instance when buffers are doubled everytime they become to small */
+    boolean rare() default false;
+    /** @return if true then garbage is rare, for instance when buffers are doubled everytime they become to small */
+    String text() default "";
+
     enum Type {
         /**
          * Indicates that only the result value returned by a method is allocated and no other

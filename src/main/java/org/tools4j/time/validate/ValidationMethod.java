@@ -60,7 +60,7 @@ public enum ValidationMethod {
         return timeValidator;
     }
 
-    public static int length() {
+    public static int count() {
         return VALUES.length;
     }
 

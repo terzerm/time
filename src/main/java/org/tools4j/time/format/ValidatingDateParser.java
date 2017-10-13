@@ -34,20 +34,14 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.Objects;
 
-abstract class ValidatingDateParser implements DateParser.Default {
+final class ValidatingDateParser implements DateParser.Default {
 
     private final DateFormat format;
     private final ValidationMethod validationMethod;
     private final byte separatorChar;
 
-    private ValidatingDateParser(final DateFormat format, final ValidationMethod validationMethod) {
-        this.format = Objects.requireNonNull(format);
-        this.validationMethod = Objects.requireNonNull(validationMethod);
-        this.separatorChar = NO_SEPARATOR;
-    }
-
-    private ValidatingDateParser(final DateFormat format, final char separatorChar,
-                                 final ValidationMethod validationMethod) {
+    ValidatingDateParser(final DateFormat format, final char separatorChar,
+                         final ValidationMethod validationMethod) {
         this.format = Objects.requireNonNull(format);
         this.validationMethod = Objects.requireNonNull(validationMethod);
         this.separatorChar = Ascii.validateSeparatorChar(separatorChar);

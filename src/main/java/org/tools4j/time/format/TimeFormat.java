@@ -23,6 +23,8 @@
  */
 package org.tools4j.time.format;
 
+import java.util.function.Consumer;
+
 /**
  * Constants for common time formats of fixed length. The format defines the ordering
  * of the time components and the position of the separator characters (if any), but not
@@ -161,5 +163,32 @@ public enum TimeFormat {
     /** @return the length of a string formatted according to this time format */
     public final int length() {
         return length;
+    }
+
+    private static TimeFormat[] VALUES = values();
+
+    /** @return the number of time formats available */
+    public static final int count() {
+        return VALUES.length;
+    }
+
+    /**
+     * @param ordinal the zero based format index or {@link #ordinal()}
+     * @return the constant for the specified ordinal
+     * @throws ArrayIndexOutOfBoundsException if ordinal is out of bounds
+     * @see #count()
+     */
+    public static final TimeFormat valueByOrdinal(final int ordinal) {
+        return VALUES[ordinal];
+    }
+
+    /**
+     * Invokes the specified consumer for each of the constants.
+     * @param consumer the consumer to invoke for every constant
+     */
+    public static final void forEach(final Consumer<? super TimeFormat> consumer) {
+        for (final TimeFormat packing : VALUES) {
+            consumer.accept(packing);
+        }
     }
 }

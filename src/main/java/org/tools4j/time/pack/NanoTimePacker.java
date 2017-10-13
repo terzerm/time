@@ -298,12 +298,12 @@ public interface NanoTimePacker {
         }
 
         private static NanoTimePacker[][] instancesByPackingAndValidationMethod() {
-            final NanoTimePacker[][] instances = new NanoTimePacker[Packing.length()][ValidationMethod.length()];
+            final NanoTimePacker[][] instances = new NanoTimePacker[Packing.count()][ValidationMethod.count()];
             final int vOrdUnvalidated = ValidationMethod.UNVALIDATED.ordinal();
             instances[Packing.BINARY.ordinal()][vOrdUnvalidated] = BINARY;
             instances[Packing.DECIMAL.ordinal()][vOrdUnvalidated] = DECIMAL;
-            for (int pOrd = 0; pOrd < Packing.length(); pOrd++) {
-                for (int vOrd = 0; vOrd < ValidationMethod.length(); vOrd++) {
+            for (int pOrd = 0; pOrd < Packing.count(); pOrd++) {
+                for (int vOrd = 0; vOrd < ValidationMethod.count(); vOrd++) {
                     if (vOrd != vOrdUnvalidated) {
                         instances[pOrd][vOrd] = new Validated(instances[pOrd][vOrdUnvalidated], ValidationMethod.valueByOrdinal(vOrd));
                     }

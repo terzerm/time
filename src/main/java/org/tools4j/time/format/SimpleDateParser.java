@@ -33,17 +33,12 @@ import org.tools4j.time.validate.ValidationMethod;
 import java.time.LocalDate;
 import java.util.Objects;
 
-public class SimpleDateParser implements DateParser.Default {
+final class SimpleDateParser implements DateParser.Default {
 
     private final DateFormat format;
     private final byte separatorChar;
 
-    private SimpleDateParser(final DateFormat format) {
-        this.format = Objects.requireNonNull(format);
-        this.separatorChar = NO_SEPARATOR;
-    }
-
-    private SimpleDateParser(final DateFormat format, final char separatorChar) {
+    SimpleDateParser(final DateFormat format, final char separatorChar) {
         this.format = Objects.requireNonNull(format);
         this.separatorChar = Ascii.validateSeparatorChar(separatorChar);
     }
