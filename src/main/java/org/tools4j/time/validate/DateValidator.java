@@ -127,7 +127,7 @@ public enum DateValidator {
             if (isValidDay(year, month, day)) {
                 return day;
             }
-            throw new DateTimeException("Invalid day in date: " + year + "-" + month + "-" + day);
+            throw new DateTimeException("Invalid day in date: " + year + "/" + month + "/" + day);
         }
     };
 

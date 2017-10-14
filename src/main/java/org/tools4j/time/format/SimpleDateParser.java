@@ -36,16 +36,21 @@ import java.util.Objects;
 final class SimpleDateParser implements DateParser.Default {
 
     private final DateFormat format;
-    private final byte separatorChar;
+    private final byte separator;
 
-    SimpleDateParser(final DateFormat format, final char separatorChar) {
+    SimpleDateParser(final DateFormat format, final char separator) {
         this.format = Objects.requireNonNull(format);
-        this.separatorChar = Ascii.validateSeparatorChar(separatorChar);
+        this.separator = Ascii.validateSeparatorChar(separator);
     }
 
     @Override
     public DateFormat format() {
         return format;
+    }
+
+    @Override
+    public char separator() {
+        return (char)separator;
     }
 
     @Override
@@ -110,13 +115,22 @@ final class SimpleDateParser implements DateParser.Default {
         final int separatorOffset = separatorIndex == 0 ? format().offsetSeparatorOne() :
                 separatorIndex == 1 ? format().offsetSeparatorTwo() : -1;
         if (separatorOffset >= 0) {
-            return (char) reader.readChar(source, offset + separatorIndex);
+            return (char) reader.readChar(source, offset + separatorOffset);
         }
-        return (char) NO_SEPARATOR;
+        return NO_SEPARATOR;
     }
 
     @Override
     public <S> boolean isValid(final S source, final AsciiReader<? super S> reader, final int offset) {
-        return ValidatingDateParser.isValid(format(), separatorChar, source, reader, offset);
+        return ValidatingDateParser.isValid(format(), separator, source, reader, offset);
+    }
+
+    @Override
+    public String toString() {
+        return "SimpleDateParser[format=" + format() + ", separator=" + toSeparatorString(separator()) + "]";
+    }
+
+    static String toSeparatorString(final char separator) {
+        return separator == NO_SEPARATOR ? "<none>" : "'" + separator + "'";
     }
 }

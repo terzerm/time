@@ -35,8 +35,10 @@ public interface DateParser {
     int INVALID = DateValidator.INVALID;
     long INVALID_EPOCH = DateValidator.INVALID_EPOCH;
     byte INVAILD_SEPARATOR = -1;
+    char DEFAULT_SEPARATOR = '-';
     char NO_SEPARATOR = Ascii.NO_SEPARATOR;
     DateFormat format();
+    char separator();
     ValidationMethod validationMethod();
     int toYear(CharSequence charSequence);
     int toYear(CharSequence charSequence, int offset);
@@ -80,7 +82,8 @@ public interface DateParser {
     <S> boolean isValid(S source, AsciiReader<? super S> reader, int offset);
 
     /**
-     * Returns a date parser for the specified format which performs no validation.
+     * Returns a date parser for the specified format which performs no validation.  If the date format contains a
+     * separator character, '-' is used.
      * @param format the date format
      * @return a cached parser instance
      */
@@ -102,13 +105,14 @@ public interface DateParser {
     }
 
     /**
-     * Returns a date parser for the specified format and validation method.
+     * Returns a date parser for the specified format and validation method.  If the date format contains a separator
+     * character, '-' is used.
      * @param format the date format
      * @param validationMethod the type of date validation to perform
      * @return a cached parser instance
      */
     static DateParser valueOf(final DateFormat format, final ValidationMethod validationMethod) {
-        return valueOf(format, '-', validationMethod);
+        return valueOf(format, DEFAULT_SEPARATOR, validationMethod);
     }
 
     /**
@@ -269,10 +273,10 @@ public interface DateParser {
         }
 
         private static DateParser[][] instancesByFormatAndValidationMethod(final char separatorChar) {
-            final DateParser[][] instances = new DateParser[Packing.count()][ValidationMethod.count()];
+            final DateParser[][] instances = new DateParser[DateFormat.count()][ValidationMethod.count()];
             for (int fOrd = 0; fOrd < DateFormat.count(); fOrd++) {
                 final DateFormat format = DateFormat.valueByOrdinal(fOrd);
-                if (format.hasSeparators() | separatorChar != NO_SEPARATOR) {
+                if (format.hasSeparators() | separatorChar == NO_SEPARATOR) {
                     for (int vOrd = 0; vOrd < ValidationMethod.count(); vOrd++) {
                         final ValidationMethod validationMethod = ValidationMethod.valueByOrdinal(vOrd);
                         instances[fOrd][vOrd] = create(format, separatorChar, validationMethod);

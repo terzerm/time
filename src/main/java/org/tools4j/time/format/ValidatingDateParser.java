@@ -38,18 +38,23 @@ final class ValidatingDateParser implements DateParser.Default {
 
     private final DateFormat format;
     private final ValidationMethod validationMethod;
-    private final byte separatorChar;
+    private final byte separator;
 
-    ValidatingDateParser(final DateFormat format, final char separatorChar,
+    ValidatingDateParser(final DateFormat format, final char separator,
                          final ValidationMethod validationMethod) {
         this.format = Objects.requireNonNull(format);
         this.validationMethod = Objects.requireNonNull(validationMethod);
-        this.separatorChar = Ascii.validateSeparatorChar(separatorChar);
+        this.separator = Ascii.validateSeparatorChar(separator);
     }
 
     @Override
     public DateFormat format() {
         return format;
+    }
+
+    @Override
+    public char separator() {
+        return (char)separator;
     }
 
     @Override
@@ -109,7 +114,7 @@ final class ValidatingDateParser implements DateParser.Default {
             final int year = toYear(validationMethod, format, source, reader, offset);
             final int month = toMonth(validationMethod, format, source, reader, offset);
             final int day = Ascii.digit(ch1) * 10 + Ascii.digit(ch2);
-            if (DateValidator.isValidDate(year, day, month)) {
+            if (DateValidator.isValidDate(year, month, day)) {
                 return day;
             }
             return invalid(validationMethod, format, INVALID, "Invalid day in date string: ", source, reader, offset);
@@ -157,18 +162,18 @@ final class ValidatingDateParser implements DateParser.Default {
         final int separatorOffset = separatorIndex == 0 ? format().offsetSeparatorOne() :
                 separatorIndex == 1 ? format().offsetSeparatorTwo() : -1;
         if (separatorOffset >= 0) {
-            final byte sep = reader.readChar(source, offset + separatorIndex);
-            if (separatorChar == sep) {
+            final byte sep = reader.readChar(source, offset + separatorOffset);
+            if (separator == sep) {
                 return (char)sep;
             }
             return invalidSeparator((char)sep, "Invalid separator char in date string: ", source, reader, offset);
         }
-        return (char)NO_SEPARATOR;
+        return NO_SEPARATOR;
     }
 
     @Override
     public <S> boolean isValid(final S source, final AsciiReader<? super S> reader, final int offset) {
-        return isValid(format(), separatorChar, source, reader, offset);
+        return isValid(format(), separator, source, reader, offset);
     }
     static <S> boolean isValid(final DateFormat format, final byte separatorChar,
                                final S source, final AsciiReader<? super S> reader, final int offset) {
@@ -191,7 +196,7 @@ final class ValidatingDateParser implements DateParser.Default {
     }
 
     private <S> boolean hasValidSepatators(final S source, final AsciiReader<? super S> reader, final int offset) {
-        return hasValidSepatators(format(), separatorChar, source, reader, offset);
+        return hasValidSepatators(format(), separator, source, reader, offset);
     }
     private static <S> boolean hasValidSepatators(final DateFormat format, final byte separatorChar,
                                                   final S source, final AsciiReader<? super S> reader, final int offset) {
@@ -260,4 +265,9 @@ final class ValidatingDateParser implements DateParser.Default {
         return sb.toString();
     }
 
+    @Override
+    public String toString() {
+        return "SimpleDateParser[format=" + format() + ", separator=" + SimpleDateParser.toSeparatorString(separator())
+                + ", validationMethod=" + validationMethod() + "]";
+    }
 }
