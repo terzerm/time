@@ -34,7 +34,7 @@ import java.time.LocalDate;
 public interface DateParser {
     int INVALID = DateValidator.INVALID;
     long INVALID_EPOCH = DateValidator.INVALID_EPOCH;
-    byte INVAILD_SEPARATOR = -1;
+    byte INVALID_SEPARATOR = -1;
     char DEFAULT_SEPARATOR = '-';
     char NO_SEPARATOR = Ascii.NO_SEPARATOR;
     DateFormat format();
@@ -204,7 +204,11 @@ public interface DateParser {
         }
         @Override
         default <S> long toEpochMillis(final S source, final AsciiReader<? super S> reader, final int offset) {
-            return toEpochDays(source, reader, offset) * TimeFactors.MILLIS_PER_DAY;
+            final long epochDay = toEpochDays(source, reader, offset);
+            if (epochDay != INVALID_EPOCH) {
+                return toEpochDays(source, reader, offset) * TimeFactors.MILLIS_PER_DAY;
+            }
+            return INVALID_EPOCH;
         }
         @Override
         default LocalDate toLocalDate(final CharSequence charSequence) {

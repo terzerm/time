@@ -28,8 +28,10 @@ import org.junit.runner.RunWith;
 import org.tools4j.spockito.Spockito;
 import org.tools4j.time.pack.DatePacker;
 import org.tools4j.time.pack.Packing;
+import org.tools4j.time.validate.DateValidator;
 import org.tools4j.time.validate.ValidationMethod;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -44,13 +46,14 @@ import static org.junit.Assert.*;
 public class DateParserTest {
 
     private static final char[] SEPARATORS = {DateParser.NO_SEPARATOR, '-', '/', '.', '_'};
+    private static final char BAD_SEPARATOR = ':';
     private static final Map<DateFormat, String> PATTERN_BY_FORMAT = patternByFormat();
     private static final DateParser[] PARSERS = initParsers();
 
     @RunWith(Spockito.class)
     @Spockito.Unroll({
             "|  localDate |",
-//            "| 2017-01-01 |",
+            "| 2017-01-01 |",
             "| 2017-01-31 |",
             "| 2017-02-28 |",
             "| 2017-03-31 |",
@@ -186,40 +189,268 @@ public class DateParserTest {
             return formatter.format(localDate);
         }
     }
+    
+    enum InvalidPart {
+        YEAR, MONTH, DAY, SEPARATOR
+    }
 
     @RunWith(Spockito.class)
     @Spockito.Unroll({
-            "|  year | month | day |",
-            "|     0 |    1  |   1 |",
-            "|    -1 |    1  |   1 |",
-            "| 10000 |    1  |   1 |",
-            "|  2017 |    0  |   1 |",
-            "|  2017 |   -1  |   1 |",
-            "|  2017 |   13  |   1 |",
-            "|  2017 |    1  |   0 |",
-            "|  2017 |    4  |  -1 |",//NOTE: day=-1 is equivalent to day=31
-            "|  2017 |    1  |  32 |",
-            "|  2017 |    2  |  29 |",
-            "|  2016 |    2  |  30 |",
-            "|  2000 |    2  |  30 |",
-            "|  1900 |    2  |  29 |",
-            "|  1900 |    4  |  31 |",
-            "|  1900 |    6  |  31 |",
-            "|  1900 |    9  |  31 |",
-            "|  1900 |   11  |  31 |",
+            "|  year | month | day | invalidPart |",
+            "|     0 |    1  |   1 |     YEAR    |",
+            "|    -1 |    1  |   1 |     YEAR    |",
+            "|  -999 |    1  |   1 |     YEAR    |",
+            "|  2017 |    0  |   1 |    MONTH    |",
+            "|  2017 |   -1  |   1 |    MONTH    |",
+            "|  2017 |   13  |   1 |    MONTH    |",
+            "|  2017 |    1  |   0 |     DAY     |",
+            "|  2017 |    4  |  -1 |     DAY     |",//NOTE: day=-1 is equivalent to day=31
+            "|  2017 |    1  |  32 |     DAY     |",
+            "|  2017 |    2  |  29 |     DAY     |",
+            "|  2016 |    2  |  30 |     DAY     |",
+            "|  2000 |    2  |  30 |     DAY     |",
+            "|  1900 |    2  |  29 |     DAY     |",
+            "|  1900 |    4  |  31 |     DAY     |",
+            "|  1900 |    6  |  31 |     DAY     |",
+            "|  1900 |    9  |  31 |     DAY     |",
+            "|  1900 |   11  |  31 |     DAY     |",
+            "|  1900 |   11  |  30 |  SEPARATOR  |",
     })
-    @Spockito.Name("[{row}]: {year}/{month}/{day}")
+    @Spockito.Name("[{row}]: {year}/{month}/{day}, invalidPart={invalidPart}")
     public static class Invalid {
-//        @Test(expected = DateTimeException.class)
-//        public void packIllegalYearMonthDayBinary(final int year, final int month, final int day) {
-//            DateParser.BINARY.forValidationMethod(THROW_EXCEPTION).pack(year, month, day);
-//        }
-//
-//        @Test
-//        public void packInvalidYearMonthDayBinary(final int year, final int month, final int day) {
-//            final int packed = DateParser.BINARY.forValidationMethod(INVALIDATE_RESULT).pack(year, month, day);
-//            assertEquals("should be invalid", DateParser.INVALID, packed);
-//        }
+        @Test
+        public void toYear(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+            final boolean isInvalid = invalidPart == InvalidPart.YEAR;
+            for (final DateParser parser : PARSERS) {
+                final String input = formatInput(parser, year, month, day, invalidPart);
+                DateTimeException exception = null;
+                int result = DateValidator.YEAR_MAX + 1;
+                try {
+                    result = parser.toYear(input);
+                } catch (final DateTimeException e) {
+                    exception = e;
+                }
+                if (isInvalid) {
+                    assertValue(parser, input, exception, result);
+                } else {
+                    assertEquals("Wrong year for input=" + input, year, result);
+                }
+            }
+        }
+
+        @Test
+        public void toMonth(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+            final boolean isInvalid = invalidPart == InvalidPart.MONTH;
+            for (final DateParser parser : PARSERS) {
+                final String input = formatInput(parser, year, month, day, invalidPart);
+                DateTimeException exception = null;
+                int result = DateValidator.YEAR_MAX + 1;
+                try {
+                    result = parser.toMonth(input);
+                } catch (final DateTimeException e) {
+                    exception = e;
+                }
+                if (isInvalid) {
+                    assertValue(parser, input, exception, result);
+                } else {
+                    assertEquals("Wrong month for input=" + input, month, result);
+                }
+            }
+        }
+
+        @Test
+        public void toDay(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+            final boolean isInvalid = invalidPart != InvalidPart.SEPARATOR;
+            for (final DateParser parser : PARSERS) {
+                final String input = formatInput(parser, year, month, day, invalidPart);
+                DateTimeException exception = null;
+                int result = DateValidator.YEAR_MAX + 1;
+                try {
+                    result = parser.toDay(input);
+                } catch (final DateTimeException e) {
+                    exception = e;
+                }
+                if (isInvalid) {
+                    assertValue(parser, input, exception, result);
+                } else {
+                    assertEquals("Wrong day for input=" + input, day, result);
+                }
+            }
+        }
+
+        @Test
+        public void toPacked(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+            for (final DateParser parser : PARSERS) {
+                final String input = formatInput(parser, year, month, day, invalidPart);
+                for (final Packing packing : Packing.values()) {
+                    DateTimeException exception = null;
+                    int result = DateValidator.YEAR_MAX + 1;
+                    try {
+                        result = parser.toPacked(input, packing);
+                    } catch (final DateTimeException e) {
+                        exception = e;
+                    }
+                    if (!isValid(parser, invalidPart)) {
+                        assertValue(parser, input, exception, result);
+                    }
+                }
+            }
+        }
+
+        @Test
+        public void toEpochDays(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+            for (final DateParser parser : PARSERS) {
+                final String input = formatInput(parser, year, month, day, invalidPart);
+                DateTimeException exception = null;
+                long result = DateValidator.YEAR_MAX + 1;
+                try {
+                    result = parser.toEpochDays(input);
+                } catch (final DateTimeException e) {
+                    exception = e;
+                }
+                if (!isValid(parser, invalidPart)) {
+                    assertEpoch(parser, input, exception, result);
+                }
+            }
+        }
+
+        @Test
+        public void toEpochMillis(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+            for (final DateParser parser : PARSERS) {
+                final String input = formatInput(parser, year, month, day, invalidPart);
+                DateTimeException exception = null;
+                long result = DateValidator.YEAR_MAX + 1;
+                try {
+                    result = parser.toEpochMillis(input);
+                } catch (final DateTimeException e) {
+                    exception = e;
+                }
+                if (!isValid(parser, invalidPart)) {
+                    assertEpoch(parser, input, exception, result);
+                }
+            }
+        }
+
+        @Test
+        public void toLocalDate(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+            for (final DateParser parser : PARSERS) {
+                final boolean shouldFail =
+                        invalidPart != InvalidPart.SEPARATOR ||
+                        invalidPart == InvalidPart.SEPARATOR && parser.validationMethod() != ValidationMethod.UNVALIDATED &&
+                                (parser.format().hasSeparators() && parser.separator() != DateParser.NO_SEPARATOR);
+
+                final String input = formatInput(parser, year, month, day, invalidPart);
+                try {
+                    parser.toLocalDate(input);
+                    if (shouldFail) {
+                        fail("toLocalDate should ALWAYS throw exception for parser=" + parser + " and input=" + input);
+                    }
+                } catch (final DateTimeException e) {
+                    if (!shouldFail) {
+                        throw new AssertionError(
+                                "toLocalDate should NEVER throw exception for parser=" + parser +
+                                        " and input=" + input + " but we caught exception=" + e, e);
+                    }
+                }
+            }
+        }
+
+        @Test
+        public void toSeparator(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+            for (final DateParser parser : PARSERS) {
+                final String input = formatInput(parser, year, month, day, invalidPart);
+                for (int sep = 0; sep <= 1; sep++) {
+                    DateTimeException exception = null;
+                    char result = (char)(Byte.MAX_VALUE + 1);
+                    try {
+                        result = parser.toSeparator(input, sep);
+                    } catch (final DateTimeException e) {
+                        exception = e;
+                    }
+                    if (!isValid(parser, invalidPart) && invalidPart == InvalidPart.SEPARATOR) {
+                        assertSeparator(parser, input, exception, result);
+                    } else {
+                        final char expected = parser.format().hasSeparators() ?
+                                (invalidPart == InvalidPart.SEPARATOR ? BAD_SEPARATOR : parser.separator()) :
+                                DateParser.NO_SEPARATOR;
+                        assertEquals("input=" + input + ", parser=" + parser, expected, result);
+                    }
+                }
+            }
+        }
+
+        @Test
+        public void isValid(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+            for (final DateParser parser : PARSERS) {
+                final boolean isValid = isValid(parser, invalidPart);
+                final String input = formatInput(parser, year, month, day, invalidPart);
+                assertEquals("input=" + input + ", parser=" + parser, isValid, parser.isValid(input));
+                assertEquals("input=" + input + ", parser=" + parser, isValid, parser.isValid(input, AsciiReader.CHAR_SEQUENCE));
+                assertEquals("input=BLA" + input + ", parser=" + parser, isValid, parser.isValid("BLA" + input, 3));
+            }
+        }
+
+        private static boolean isValid(final DateParser parser, final InvalidPart invalidPart) {
+            return invalidPart == InvalidPart.SEPARATOR &&
+                    (!parser.format().hasSeparators() || parser.separator() == DateParser.NO_SEPARATOR);
+        }
+
+        private static void assertEpoch(final DateParser parser, final String input,
+                                        final DateTimeException exception, final long result) {
+            assertResult(parser, input, exception, result, DateParser.INVALID_EPOCH);
+        }
+        private static void assertSeparator(final DateParser parser, final String input,
+                                            final DateTimeException exception, final char result) {
+            assertResult(parser, input, exception, (byte)result, DateParser.INVALID_SEPARATOR);
+        }
+        private static void assertValue(final DateParser parser, final String input,
+                                        final DateTimeException exception, final int result) {
+            assertResult(parser, input, exception, result, DateParser.INVALID);
+        }
+        private static void assertResult(final DateParser parser, final String input,
+                                         final DateTimeException exception,
+                                         final long result, final long invalidValue) {
+            switch (parser.validationMethod()) {
+                case UNVALIDATED:
+                    assertNull("Unvalidating parser should not throw an exception for input='" +
+                            input + "' and parser=" + parser, exception);
+                    assertNotEquals("Unvalidating parser should not return INVALID for input='" +
+                            input + "' and parser=" + parser, invalidValue, result);
+                    break;
+                case INVALIDATE_RESULT:
+                    assertNull("Invalidate-result parser should not throw an exception for input='" +
+                            input + "' and parser=" + parser, exception);
+                    assertEquals("Invalidate-result parser should return INVALID for input='" +
+                            input + "' and parser=" + parser, invalidValue, result);
+                    break;
+                case THROW_EXCEPTION:
+                    assertNotNull("Throw-exception parser should throw an exception for input='" +
+                            input + "' and parser=" + parser, exception);
+                    break;
+                default:
+                    throw new RuntimeException("Unsupported validation method: " + parser.validationMethod());
+            }
+        }
+
+        private static String formatInput(final DateParser parser,
+                                          final int year, final int month, final int day, final InvalidPart invalidPart) {
+            final char separator = invalidPart == InvalidPart.SEPARATOR ? BAD_SEPARATOR : parser.separator();
+            final String standardPattern = PATTERN_BY_FORMAT.get(parser.format());
+            final String currentPattern = standardPattern.replace(DateParser.DEFAULT_SEPARATOR, separator);
+            return currentPattern
+                    .replace("yyyy", toFixedLength(4, year))
+                    .replace("MM", toFixedLength(2, month))
+                    .replace("dd", toFixedLength(2, day));
+        }
+
+        private static final String toFixedLength(final int length, final int value) {
+            final StringBuilder sb = new StringBuilder(length);
+            sb.append(value);
+            while (sb.length() < length) {
+                sb.insert(0, '0');
+            }
+            return sb.substring(0, length);
+        }
     }
 
     public static class Special {
