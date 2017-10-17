@@ -93,11 +93,11 @@ final class SimpleDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> long toEpochDays(final S source, final AsciiReader<? super S> reader, final int offset) {
+    public <S> long toEpochDay(final S source, final AsciiReader<? super S> reader, final int offset) {
         final int year = toYear(source, reader, offset);
         final int month = toMonth(source, reader, offset);
         final int day = toDay(source, reader, offset);
-        return Epoch.valueOf(ValidationMethod.UNVALIDATED).toEpochDays(year, month, day);
+        return Epoch.valueOf(ValidationMethod.UNVALIDATED).toEpochDay(year, month, day);
     }
 
     @Garbage(Garbage.Type.RESULT)

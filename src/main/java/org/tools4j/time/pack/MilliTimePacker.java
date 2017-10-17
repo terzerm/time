@@ -68,7 +68,8 @@ public interface MilliTimePacker {
     int pack(LocalTime localTime);
     @Garbage(Garbage.Type.RESULT)
     LocalTime unpackLocalTime(int packed);
-    int packMillisSinceEpoch(long millisSinceEpoch);
+    int packEpochMilli(long millisSinceEpoch);
+    long unpackEpochMilli(int packed);
 
     /**
      * Returns a milli-time packer that performs no validation.
@@ -119,8 +120,19 @@ public interface MilliTimePacker {
         }
 
         @Override
-        default int packMillisSinceEpoch(final long millisSinceEpoch) {
-            return Epoch.valueOf(validationMethod()).fromEpochMillis(millisSinceEpoch, this);
+        default int packEpochMilli(final long millisSinceEpoch) {
+            return Epoch.valueOf(validationMethod()).fromEpochMilli(millisSinceEpoch, this);
+        }
+
+        @Override
+        default long unpackEpochMilli(final int packed) {
+            return Epoch.valueOf(validationMethod()).toEpochMilli(
+                    0, 0, 0,
+                    unpackHour(packed),
+                    unpackMinute(packed),
+                    unpackSecond(packed),
+                    unpackMilli(packed)
+            );
         }
 
         @Override

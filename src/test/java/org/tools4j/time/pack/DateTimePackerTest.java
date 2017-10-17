@@ -169,9 +169,9 @@ public class DateTimePackerTest {
         }
 
         @Test
-        public void packMillisSinceEpoch(final LocalDate localDate, final LocalTime localTime) throws Exception {
+        public void packEpochMilli(final LocalDate localDate, final LocalTime localTime) throws Exception {
             for (final DateTimePacker packer : PACKERS) {
-                final long packed = packer.packMillisSinceEpoch(localDate.atTime(localTime).toInstant(ZoneOffset.UTC).toEpochMilli());
+                final long packed = packer.packEpochMilli(localDate.atTime(localTime).toInstant(ZoneOffset.UTC).toEpochMilli());
                 final LocalDateTime localDateTime = packer.unpackLocalDateTime(packed);
                 assertEquals(packer + ": " + localDate + " " + localTime + " -> " + packed, localDate, localDateTime.toLocalDate());
                 assertEquals(packer + ": " + localDate + " " + localTime + " -> " + packed, localTime, localDateTime.toLocalTime());

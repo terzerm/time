@@ -128,25 +128,25 @@ public class DateParserTest {
         }
 
         @Test
-        public void toEpochDays(final LocalDate localDate) throws Exception {
+        public void toEpochDay(final LocalDate localDate) throws Exception {
             for (final DateParser parser : PARSERS) {
                 final long epochDay = localDate.toEpochDay();
                 final String input = formatInput(parser, localDate);
-                assertEquals("input=" + input, epochDay, parser.toEpochDays(input));
-                assertEquals("input=" + input, epochDay, parser.toEpochDays(input, AsciiReader.CHAR_SEQUENCE));
-                assertEquals("input=BLA" + input, epochDay, parser.toEpochDays("BLA" + input, 3));
+                assertEquals("input=" + input, epochDay, parser.toEpochDay(input));
+                assertEquals("input=" + input, epochDay, parser.toEpochDay(input, AsciiReader.CHAR_SEQUENCE));
+                assertEquals("input=BLA" + input, epochDay, parser.toEpochDay("BLA" + input, 3));
             }
         }
 
         @Test
-        public void toEpochMillis(final LocalDate localDate) throws Exception {
+        public void toEpochMilli(final LocalDate localDate) throws Exception {
             for (final DateParser parser : PARSERS) {
                 final long epochMilli = localDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
                 final String input = formatInput(parser, localDate);
-                assertEquals("input=" + input, epochMilli, parser.toEpochMillis(input));
-                assertEquals("input=" + input, epochMilli, parser.toEpochMillis(input, AsciiReader.CHAR_SEQUENCE));
-                assertEquals("input=BLA" + input, epochMilli, parser.toEpochMillis("BLA" + input, 3));
-                assertEquals("input=BLABLA" + input, epochMilli, parser.toEpochMillis("BLABLA" + input, AsciiReader.CHAR_SEQUENCE, 6));
+                assertEquals("input=" + input, epochMilli, parser.toEpochMilli(input));
+                assertEquals("input=" + input, epochMilli, parser.toEpochMilli(input, AsciiReader.CHAR_SEQUENCE));
+                assertEquals("input=BLA" + input, epochMilli, parser.toEpochMilli("BLA" + input, 3));
+                assertEquals("input=BLABLA" + input, epochMilli, parser.toEpochMilli("BLABLA" + input, AsciiReader.CHAR_SEQUENCE, 6));
             }
         }
 
@@ -298,13 +298,13 @@ public class DateParserTest {
         }
 
         @Test
-        public void toEpochDays(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+        public void toEpochDay(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, year, month, day, invalidPart);
                 DateTimeException exception = null;
                 long result = DateValidator.YEAR_MAX + 1;
                 try {
-                    result = parser.toEpochDays(input);
+                    result = parser.toEpochDay(input);
                 } catch (final DateTimeException e) {
                     exception = e;
                 }
@@ -315,13 +315,13 @@ public class DateParserTest {
         }
 
         @Test
-        public void toEpochMillis(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+        public void toEpochMilli(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, year, month, day, invalidPart);
                 DateTimeException exception = null;
                 long result = DateValidator.YEAR_MAX + 1;
                 try {
-                    result = parser.toEpochMillis(input);
+                    result = parser.toEpochMilli(input);
                 } catch (final DateTimeException e) {
                     exception = e;
                 }

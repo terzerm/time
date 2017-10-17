@@ -56,14 +56,14 @@ public interface DateParser {
     int toPacked(CharSequence charSequence, int offset, Packing packing);
     <S> int toPacked(S source, AsciiReader<? super S> reader, Packing packing);
     <S> int toPacked(S source, AsciiReader<? super S> reader, int offset, Packing packing);
-    long toEpochDays(CharSequence charSequence);
-    long toEpochDays(CharSequence charSequence, int offset);
-    <S> long toEpochDays(S source, AsciiReader<? super S> reader);
-    <S> long toEpochDays(S source, AsciiReader<? super S> reader, int offset);
-    long toEpochMillis(CharSequence charSequence);
-    long toEpochMillis(CharSequence charSequence, int offset);
-    <S> long toEpochMillis(S source, AsciiReader<? super S> reader);
-    <S> long toEpochMillis(S source, AsciiReader<? super S> reader, int offset);
+    long toEpochDay(CharSequence charSequence);
+    long toEpochDay(CharSequence charSequence, int offset);
+    <S> long toEpochDay(S source, AsciiReader<? super S> reader);
+    <S> long toEpochDay(S source, AsciiReader<? super S> reader, int offset);
+    long toEpochMilli(CharSequence charSequence);
+    long toEpochMilli(CharSequence charSequence, int offset);
+    <S> long toEpochMilli(S source, AsciiReader<? super S> reader);
+    <S> long toEpochMilli(S source, AsciiReader<? super S> reader, int offset);
     @Garbage(Garbage.Type.RESULT)
     LocalDate toLocalDate(CharSequence charSequence);
     @Garbage(Garbage.Type.RESULT)
@@ -179,34 +179,34 @@ public interface DateParser {
             return toPacked(source, reader, 0, packing);
         }
         @Override
-        default long toEpochDays(final CharSequence charSequence) {
-            return toEpochDays(charSequence, AsciiReader.CHAR_SEQUENCE);
+        default long toEpochDay(final CharSequence charSequence) {
+            return toEpochDay(charSequence, AsciiReader.CHAR_SEQUENCE);
         }
         @Override
-        default long toEpochDays(final CharSequence charSequence, final int offset) {
-            return toEpochDays(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
+        default long toEpochDay(final CharSequence charSequence, final int offset) {
+            return toEpochDay(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
         }
         @Override
-        default <S> long toEpochDays(final S source, final AsciiReader<? super S> reader) {
-            return toEpochDays(source, reader, 0);
+        default <S> long toEpochDay(final S source, final AsciiReader<? super S> reader) {
+            return toEpochDay(source, reader, 0);
         }
         @Override
-        default long toEpochMillis(final CharSequence charSequence) {
-            return toEpochMillis(charSequence, AsciiReader.CHAR_SEQUENCE);
+        default long toEpochMilli(final CharSequence charSequence) {
+            return toEpochMilli(charSequence, AsciiReader.CHAR_SEQUENCE);
         }
         @Override
-        default long toEpochMillis(final CharSequence charSequence, final int offset) {
-            return toEpochMillis(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
+        default long toEpochMilli(final CharSequence charSequence, final int offset) {
+            return toEpochMilli(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
         }
         @Override
-        default <S> long toEpochMillis(final S source, final AsciiReader<? super S> reader) {
-            return toEpochMillis(source, reader, 0);
+        default <S> long toEpochMilli(final S source, final AsciiReader<? super S> reader) {
+            return toEpochMilli(source, reader, 0);
         }
         @Override
-        default <S> long toEpochMillis(final S source, final AsciiReader<? super S> reader, final int offset) {
-            final long epochDay = toEpochDays(source, reader, offset);
+        default <S> long toEpochMilli(final S source, final AsciiReader<? super S> reader, final int offset) {
+            final long epochDay = toEpochDay(source, reader, offset);
             if (epochDay != INVALID_EPOCH) {
-                return toEpochDays(source, reader, offset) * TimeFactors.MILLIS_PER_DAY;
+                return toEpochDay(source, reader, offset) * TimeFactors.MILLIS_PER_DAY;
             }
             return INVALID_EPOCH;
         }

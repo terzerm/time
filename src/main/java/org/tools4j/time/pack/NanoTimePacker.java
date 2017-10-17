@@ -25,12 +25,14 @@ package org.tools4j.time.pack;
 
 import org.tools4j.time.base.Epoch;
 import org.tools4j.time.base.Garbage;
+import org.tools4j.time.base.TimeFactors;
 import org.tools4j.time.validate.TimeValidator;
 import org.tools4j.time.validate.ValidationMethod;
 
 import java.time.LocalTime;
 import java.util.Objects;
 
+import static org.tools4j.time.base.TimeFactors.NANOS_PER_MILLI;
 import static org.tools4j.time.base.TimeFactors.NANOS_PER_SECOND;
 
 /**
@@ -67,8 +69,10 @@ public interface NanoTimePacker {
     long pack(LocalTime localTime);
     @Garbage(Garbage.Type.RESULT)
     LocalTime unpackLocalTime(long packed);
-    long packMillisSinceEpoch(long millisSinceEpoch);
-    long packNanosSinceEpoch(long nanosSinceEpoch);
+    long packEpochMilli(long millisSinceEpoch);
+    long unpackEpochMilli(long packed);
+    long packEpochNano(long nanosSinceEpoch);
+    long unpackEpochNano(long packed);
 
     /**
      * Returns a nano-time packer that performs no validation.
@@ -117,13 +121,35 @@ public interface NanoTimePacker {
         }
 
         @Override
-        default long packMillisSinceEpoch(final long millisSinceEpoch) {
-            return Epoch.valueOf(validationMethod()).fromEpochMillis(millisSinceEpoch, this);
+        default long packEpochMilli(final long millisSinceEpoch) {
+            return Epoch.valueOf(validationMethod()).fromEpochMilli(millisSinceEpoch, this);
         }
 
         @Override
-        default long packNanosSinceEpoch(final long nanosSinceEpoch) {
-            return Epoch.valueOf(validationMethod()).fromEpochNanos(nanosSinceEpoch, this);
+        default long unpackEpochMilli(final long packed) {
+            return Epoch.valueOf(validationMethod()).toEpochMilli(
+                    0, 0, 0,
+                    unpackHour(packed),
+                    unpackMinute(packed),
+                    unpackSecond(packed),
+                    unpackNano(packed) / NANOS_PER_MILLI
+            );
+        }
+
+        @Override
+        default long packEpochNano(final long nanosSinceEpoch) {
+            return Epoch.valueOf(validationMethod()).fromEpochNano(nanosSinceEpoch, this);
+        }
+
+        @Override
+        default long unpackEpochNano(final long packed) {
+            return Epoch.valueOf(validationMethod()).toEpochNano(
+                    0, 0, 0,
+                    unpackHour(packed),
+                    unpackMinute(packed),
+                    unpackSecond(packed),
+                    unpackNano(packed)
+            );
         }
 
         @Override

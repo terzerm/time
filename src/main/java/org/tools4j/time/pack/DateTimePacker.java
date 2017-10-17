@@ -77,7 +77,8 @@ public interface DateTimePacker {
     long pack(LocalDate localDate, LocalTime localTime);
     @Garbage(Garbage.Type.RESULT)
     LocalDateTime unpackLocalDateTime(long packed);
-    long packMillisSinceEpoch(long millisSinceEpoch);
+    long packEpochMilli(long millisSinceEpoch);
+    long unpackEpochMilli(long packed);
 
     /**
      * Returns a date/time packer that performs no validation.
@@ -151,8 +152,13 @@ public interface DateTimePacker {
         }
 
         @Override
-        default long packMillisSinceEpoch(final long millisSinceEpoch) {
-            return Epoch.valueOf(validationMethod()).fromEpochMillis(millisSinceEpoch, this);
+        default long packEpochMilli(final long millisSinceEpoch) {
+            return Epoch.valueOf(validationMethod()).fromEpochMilli(millisSinceEpoch, this);
+        }
+
+        @Override
+        default long unpackEpochMilli(final long packed) {
+            return Epoch.valueOf(validationMethod()).toEpochMilli(packed, this);
         }
 
         @Override

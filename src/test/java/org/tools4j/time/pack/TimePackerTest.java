@@ -97,10 +97,10 @@ public class TimePackerTest {
         }
 
         @Test
-        public void packSecondsSinceEpoch(final LocalTime localTime) throws Exception {
+        public void packEpochSecond(final LocalTime localTime) throws Exception {
             for (final LocalDate date : DATES) {
                 for (final TimePacker packer : PACKERS) {
-                    final int packed = packer.packSecondsSinceEpoch(localTime.atDate(date).toEpochSecond(ZoneOffset.UTC));
+                    final int packed = packer.packEpochSecond(localTime.atDate(date).toEpochSecond(ZoneOffset.UTC));
                     final LocalTime unpacked = packer.unpackLocalTime(packed);
                     assertEquals(packer + ": " + localTime + " -> " + packed, localTime, unpacked);
                 }
@@ -108,10 +108,10 @@ public class TimePackerTest {
         }
 
         @Test
-        public void packMillisSinceEpoch(final LocalTime localTime) throws Exception {
+        public void packEpochMilli(final LocalTime localTime) throws Exception {
             for (final LocalDate date : DATES) {
                 for (final TimePacker packer : PACKERS) {
-                    final int packed = packer.packMillisSinceEpoch(localTime.atDate(date).toInstant(ZoneOffset.UTC).toEpochMilli());
+                    final int packed = packer.packEpochMilli(localTime.atDate(date).toInstant(ZoneOffset.UTC).toEpochMilli());
                     final LocalTime unpacked = packer.unpackLocalTime(packed);
                     assertEquals(packer + ": " + localTime + " -> " + packed, localTime, unpacked);
                 }

@@ -60,7 +60,7 @@ final class EpochImpl implements Epoch.Default {
         return validationMethod;
     }
 
-    public long toEpochDays(final int year, final int month, final int day) {
+    public long toEpochDay(final int year, final int month, final int day) {
         //see LocalDate.toEpochDay
         if (DateValidator.INVALID == validationMethod.dateValidator().validateDay(year, month, day)) {
             return INVALID_EPOCH;
@@ -85,7 +85,7 @@ final class EpochImpl implements Epoch.Default {
         return total - DAYS_0000_TO_1970;
     }
 
-    public int fromEpochDays(final long daysSinceEpoch, final DatePacker datePacker) {
+    public int fromEpochDay(final long daysSinceEpoch, final DatePacker datePacker) {
         //see LocalDate.ofEpochDay(..)
         long zeroDay = daysSinceEpoch + DAYS_0000_TO_1970;
         // find the march-based year

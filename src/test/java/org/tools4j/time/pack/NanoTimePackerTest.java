@@ -99,11 +99,11 @@ public class NanoTimePackerTest {
         }
 
         @Test
-        public void packNanosSinceEpoch(final LocalTime localTime) throws Exception {
+        public void packEpochNano(final LocalTime localTime) throws Exception {
             for (final LocalDate date : DATES) {
                 for (final NanoTimePacker packer : PACKERS) {
                     final Instant instant = localTime.atDate(date).toInstant(ZoneOffset.UTC);
-                    final long packed = packer.packNanosSinceEpoch(instant.toEpochMilli()
+                    final long packed = packer.packEpochNano(instant.toEpochMilli()
                             * TimeFactors.NANOS_PER_MILLI + (instant.getNano() % TimeFactors.NANOS_PER_MILLI));
                     final LocalTime unpacked = packer.unpackLocalTime(packed);
                     assertEquals(packer + ": " + localTime + " -> " + packed, localTime, unpacked);
@@ -112,12 +112,12 @@ public class NanoTimePackerTest {
         }
 
         @Test
-        public void packMillisSinceEpoch(final LocalTime localTime) throws Exception {
+        public void packEpochMilli(final LocalTime localTime) throws Exception {
             final int milliInNanos = (localTime.getNano() / TimeFactors.NANOS_PER_MILLI) * TimeFactors.NANOS_PER_MILLI;
             final LocalTime milliTime = localTime.withNano(milliInNanos);
             for (final LocalDate date : DATES) {
                 for (final NanoTimePacker packer : PACKERS) {
-                    final long packed = packer.packMillisSinceEpoch(localTime.atDate(date).toInstant(ZoneOffset.UTC).toEpochMilli());
+                    final long packed = packer.packEpochMilli(localTime.atDate(date).toInstant(ZoneOffset.UTC).toEpochMilli());
                     final LocalTime unpacked = packer.unpackLocalTime(packed);
                     assertEquals(packer + ": " + localTime + " -> " + packed, milliTime, unpacked);
                 }

@@ -117,18 +117,18 @@ public class DatePackerTest {
         }
 
         @Test
-        public void packDaysSinceEpoch(final LocalDate localDate) throws Exception {
+        public void packEpochDay(final LocalDate localDate) throws Exception {
             for (final DatePacker packer : PACKERS) {
-                final int packed = packer.packDaysSinceEpoch(localDate.toEpochDay());
+                final int packed = packer.packEpochDay(localDate.toEpochDay());
                 final LocalDate unpacked = packer.unpackLocalDate(packed);
                 assertEquals(packer + ": " + localDate + " -> " + packed, localDate, unpacked);
             }
         }
 
         @Test
-        public void packMillisSinceEpoch(final LocalDate localDate) throws Exception {
+        public void packEpochMilli(final LocalDate localDate) throws Exception {
             for (final DatePacker packer : PACKERS) {
-                final int packed = packer.packMillisSinceEpoch(localDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli());
+                final int packed = packer.packEpochMilli(localDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli());
                 final LocalDate unpacked = packer.unpackLocalDate(packed);
                 assertEquals(packer + ": " + localDate + " -> " + packed, localDate, unpacked);
             }

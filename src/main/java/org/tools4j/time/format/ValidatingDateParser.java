@@ -134,12 +134,12 @@ final class ValidatingDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> long toEpochDays(final S source, final AsciiReader<? super S> reader, final int offset) {
+    public <S> long toEpochDay(final S source, final AsciiReader<? super S> reader, final int offset) {
         final int year = toYear(source, reader, offset);
         final int month = toMonth(source, reader, offset);
         final int day = toDay(source, reader, offset);
         if (hasValidSepatators(source, reader, offset)) {
-            return Epoch.valueOf(ValidationMethod.UNVALIDATED).toEpochDays(year, month, day);
+            return Epoch.valueOf(ValidationMethod.UNVALIDATED).toEpochDay(year, month, day);
         }
         return invalidEpoch(INVALID_EPOCH, "Invalid separator char in date string: ", source, reader, offset);
     }
@@ -203,7 +203,7 @@ final class ValidatingDateParser implements DateParser.Default {
         }
         final int offsetTwo = format.offsetSeparatorTwo();
         if (offsetTwo >= 0) {
-            if (separatorChar != reader.readChar(source, offset + offsetOne)) {
+            if (separatorChar != reader.readChar(source, offset + offsetTwo)) {
                 return false;
             }
         }

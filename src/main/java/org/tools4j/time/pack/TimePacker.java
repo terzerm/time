@@ -66,8 +66,10 @@ public interface TimePacker {
     int pack(LocalTime localTime);
     @Garbage(Garbage.Type.RESULT)
     LocalTime unpackLocalTime(int packed);
-    int packSecondsSinceEpoch(long secondsSinceEpoch);
-    int packMillisSinceEpoch(long millisSinceEpoch);
+    int packEpochSecond(long secondsSinceEpoch);
+    long unpackEpochSecond(int packed);
+    int packEpochMilli(long millisSinceEpoch);
+    long unpackEpochMilli(int packed);
 
     /**
      * Returns a time packer that performs no validation.
@@ -116,13 +118,28 @@ public interface TimePacker {
         }
 
         @Override
-        default int packSecondsSinceEpoch(final long secondsSinceEpoch) {
-            return Epoch.valueOf(validationMethod()).fromEpochSeconds(secondsSinceEpoch, this);
+        default int packEpochSecond(final long secondsSinceEpoch) {
+            return Epoch.valueOf(validationMethod()).fromEpochSecond(secondsSinceEpoch, this);
         }
 
         @Override
-        default int packMillisSinceEpoch(final long millisSinceEpoch) {
-            return packSecondsSinceEpoch(millisSinceEpoch / MILLIS_PER_SECOND);
+        default long unpackEpochSecond(final int packed) {
+            return Epoch.valueOf(validationMethod()).toEpochSecond(
+                    0, 0, 0,
+                    unpackHour(packed),
+                    unpackMinute(packed),
+                    unpackSecond(packed)
+            );
+        }
+
+        @Override
+        default int packEpochMilli(final long millisSinceEpoch) {
+            return packEpochSecond(millisSinceEpoch / MILLIS_PER_SECOND);
+        }
+
+        @Override
+        default long unpackEpochMilli(final int packed) {
+            return unpackEpochSecond(packed) * MILLIS_PER_SECOND;
         }
 
         @Override

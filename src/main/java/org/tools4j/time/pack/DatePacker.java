@@ -64,8 +64,10 @@ public interface DatePacker {
     int pack(LocalDate localDate);
     @Garbage(Garbage.Type.RESULT)
     LocalDate unpackLocalDate(int packed);
-    int packDaysSinceEpoch(long daysSinceEpoch);
-    int packMillisSinceEpoch(long millisSinceEpoch);
+    int packEpochDay(long daysSinceEpoch);
+    long unpackEpochDay(int packed);
+    int packEpochMilli(long millisSinceEpoch);
+    long unpackEpochMilli(int packed);
 
     /**
      * Returns a date packer that performs no validation.
@@ -116,13 +118,23 @@ public interface DatePacker {
         }
 
         @Override
-        default int packDaysSinceEpoch(final long daysSinceEpoch) {
-            return Epoch.valueOf(validationMethod()).fromEpochDays(daysSinceEpoch, this);
+        default int packEpochDay(final long daysSinceEpoch) {
+            return Epoch.valueOf(validationMethod()).fromEpochDay(daysSinceEpoch, this);
         }
 
         @Override
-        default int packMillisSinceEpoch(final long millisSinceEpoch) {
-            return Epoch.valueOf(validationMethod()).fromEpochMillis(millisSinceEpoch, this);
+        default long unpackEpochDay(final int packed) {
+            return Epoch.valueOf(validationMethod()).toEpochDay(packed, this);
+        }
+
+        @Override
+        default int packEpochMilli(final long millisSinceEpoch) {
+            return Epoch.valueOf(validationMethod()).fromEpochMilli(millisSinceEpoch, this);
+        }
+
+        @Override
+        default long unpackEpochMilli(final int packed) {
+            return Epoch.valueOf(validationMethod()).toEpochMilli(packed, this);
         }
 
         @Override
