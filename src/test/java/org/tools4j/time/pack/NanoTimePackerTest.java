@@ -32,9 +32,8 @@ import org.tools4j.time.validate.ValidationMethod;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static org.tools4j.time.base.TimeFactors.NANOS_PER_MILLI;
 import static org.tools4j.time.validate.ValidationMethod.INVALIDATE_RESULT;
 import static org.tools4j.time.validate.ValidationMethod.THROW_EXCEPTION;
 
@@ -112,6 +111,14 @@ public class NanoTimePackerTest {
         }
 
         @Test
+        public void unpackMilliOfDay(final LocalTime localTime) throws Exception {
+            for (final NanoTimePacker packer : PACKERS) {
+                final long epochMilli = packer.unpackMilliOfDay(packer.pack(localTime));
+                assertEquals(packer + ": " + localTime, localTime.toNanoOfDay() / NANOS_PER_MILLI, epochMilli);
+            }
+        }
+
+        @Test
         public void packEpochMilli(final LocalTime localTime) throws Exception {
             final int milliInNanos = (localTime.getNano() / TimeFactors.NANOS_PER_MILLI) * TimeFactors.NANOS_PER_MILLI;
             final LocalTime milliTime = localTime.withNano(milliInNanos);
@@ -121,6 +128,14 @@ public class NanoTimePackerTest {
                     final LocalTime unpacked = packer.unpackLocalTime(packed);
                     assertEquals(packer + ": " + localTime + " -> " + packed, milliTime, unpacked);
                 }
+            }
+        }
+
+        @Test
+        public void unpackNanoOfDay(final LocalTime localTime) throws Exception {
+            for (final NanoTimePacker packer : PACKERS) {
+                final long epochNano = packer.unpackNanoOfDay(packer.pack(localTime));
+                assertEquals(packer + ": " + localTime, localTime.toNanoOfDay(), epochNano);
             }
         }
     }

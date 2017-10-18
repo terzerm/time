@@ -34,6 +34,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.*;
+import static org.tools4j.time.base.TimeFactors.MILLIS_PER_DAY;
 import static org.tools4j.time.validate.ValidationMethod.INVALIDATE_RESULT;
 import static org.tools4j.time.validate.ValidationMethod.THROW_EXCEPTION;
 
@@ -126,11 +127,27 @@ public class DatePackerTest {
         }
 
         @Test
+        public void unpackEpochDay(final LocalDate localDate) throws Exception {
+            for (final DatePacker packer : PACKERS) {
+                final long epochDay = packer.unpackEpochDay(packer.pack(localDate));
+                assertEquals(packer + ": " + localDate, localDate.toEpochDay(), epochDay);
+            }
+        }
+
+        @Test
         public void packEpochMilli(final LocalDate localDate) throws Exception {
             for (final DatePacker packer : PACKERS) {
                 final int packed = packer.packEpochMilli(localDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli());
                 final LocalDate unpacked = packer.unpackLocalDate(packed);
                 assertEquals(packer + ": " + localDate + " -> " + packed, localDate, unpacked);
+            }
+        }
+
+        @Test
+        public void unpackEpochMilli(final LocalDate localDate) throws Exception {
+            for (final DatePacker packer : PACKERS) {
+                final long epochMilli = packer.unpackEpochMilli(packer.pack(localDate));
+                assertEquals(packer + ": " + localDate, localDate.toEpochDay() * MILLIS_PER_DAY, epochMilli);
             }
         }
     }

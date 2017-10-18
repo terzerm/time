@@ -35,6 +35,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.*;
+import static org.tools4j.time.base.TimeFactors.NANOS_PER_MILLI;
 import static org.tools4j.time.validate.ValidationMethod.INVALIDATE_RESULT;
 import static org.tools4j.time.validate.ValidationMethod.THROW_EXCEPTION;
 
@@ -108,6 +109,14 @@ public class TimePackerTest {
         }
 
         @Test
+        public void unpackSecondOfDay(final LocalTime localTime) throws Exception {
+            for (final TimePacker packer : PACKERS) {
+                final long epochMilli = packer.unpackSecondOfDay(packer.pack(localTime));
+                assertEquals(packer + ": " + localTime, localTime.toSecondOfDay(), epochMilli);
+            }
+        }
+
+        @Test
         public void packEpochMilli(final LocalTime localTime) throws Exception {
             for (final LocalDate date : DATES) {
                 for (final TimePacker packer : PACKERS) {
@@ -117,6 +126,15 @@ public class TimePackerTest {
                 }
             }
         }
+
+        @Test
+        public void unpackMilliOfDay(final LocalTime localTime) throws Exception {
+            for (final TimePacker packer : PACKERS) {
+                final long epochMilli = packer.unpackMilliOfDay(packer.pack(localTime));
+                assertEquals(packer + ": " + localTime, localTime.toNanoOfDay() / NANOS_PER_MILLI, epochMilli);
+            }
+        }
+
     }
 
     @RunWith(Spockito.class)

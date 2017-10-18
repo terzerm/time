@@ -170,11 +170,21 @@ public class DateTimePackerTest {
 
         @Test
         public void packEpochMilli(final LocalDate localDate, final LocalTime localTime) throws Exception {
+            final long epochMilli = localDate.atTime(localTime).toInstant(ZoneOffset.UTC).toEpochMilli();
             for (final DateTimePacker packer : PACKERS) {
-                final long packed = packer.packEpochMilli(localDate.atTime(localTime).toInstant(ZoneOffset.UTC).toEpochMilli());
+                final long packed = packer.packEpochMilli(epochMilli);
                 final LocalDateTime localDateTime = packer.unpackLocalDateTime(packed);
                 assertEquals(packer + ": " + localDate + " " + localTime + " -> " + packed, localDate, localDateTime.toLocalDate());
                 assertEquals(packer + ": " + localDate + " " + localTime + " -> " + packed, localTime, localDateTime.toLocalTime());
+            }
+        }
+
+        @Test
+        public void unpackEpochMilli(final LocalDate localDate, final LocalTime localTime) throws Exception {
+            final LocalDateTime localDateTime = localDate.atTime(localTime);
+            for (final DateTimePacker packer : PACKERS) {
+                final long epochMilli = packer.unpackEpochMilli(packer.pack(localDateTime));
+                assertEquals(packer + ": " + localDate, localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli(), epochMilli);
             }
         }
     }

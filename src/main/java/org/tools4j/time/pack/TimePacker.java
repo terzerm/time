@@ -31,7 +31,7 @@ import org.tools4j.time.validate.ValidationMethod;
 import java.time.LocalTime;
 import java.util.Objects;
 
-import static org.tools4j.time.base.TimeFactors.MILLIS_PER_SECOND;
+import static org.tools4j.time.base.TimeFactors.*;
 
 /**
  * Packs a time value (hour, minute, second) into an integer.  Packing and unpacking can be done with or without time
@@ -67,9 +67,9 @@ public interface TimePacker {
     @Garbage(Garbage.Type.RESULT)
     LocalTime unpackLocalTime(int packed);
     int packEpochSecond(long secondsSinceEpoch);
-    long unpackEpochSecond(int packed);
+    long unpackSecondOfDay(int packed);
     int packEpochMilli(long millisSinceEpoch);
-    long unpackEpochMilli(int packed);
+    long unpackMilliOfDay(int packed);
 
     /**
      * Returns a time packer that performs no validation.
@@ -123,13 +123,10 @@ public interface TimePacker {
         }
 
         @Override
-        default long unpackEpochSecond(final int packed) {
-            return Epoch.valueOf(validationMethod()).toEpochSecond(
-                    0, 0, 0,
-                    unpackHour(packed),
-                    unpackMinute(packed),
-                    unpackSecond(packed)
-            );
+        default long unpackSecondOfDay(final int packed) {
+            return unpackHour(packed) * SECONDS_PER_HOUR +
+                    unpackMinute(packed) * SECONDS_PER_MINUTE +
+                    unpackSecond(packed);
         }
 
         @Override
@@ -138,8 +135,10 @@ public interface TimePacker {
         }
 
         @Override
-        default long unpackEpochMilli(final int packed) {
-            return unpackEpochSecond(packed) * MILLIS_PER_SECOND;
+        default long unpackMilliOfDay(final int packed) {
+            return unpackHour(packed) * MILLIS_PER_HOUR +
+                    unpackMinute(packed) * MILLIS_PER_MINUTE +
+                    unpackSecond(packed) * MILLIS_PER_SECOND;
         }
 
         @Override

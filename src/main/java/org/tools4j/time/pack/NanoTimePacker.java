@@ -25,15 +25,13 @@ package org.tools4j.time.pack;
 
 import org.tools4j.time.base.Epoch;
 import org.tools4j.time.base.Garbage;
-import org.tools4j.time.base.TimeFactors;
 import org.tools4j.time.validate.TimeValidator;
 import org.tools4j.time.validate.ValidationMethod;
 
 import java.time.LocalTime;
 import java.util.Objects;
 
-import static org.tools4j.time.base.TimeFactors.NANOS_PER_MILLI;
-import static org.tools4j.time.base.TimeFactors.NANOS_PER_SECOND;
+import static org.tools4j.time.base.TimeFactors.*;
 
 /**
  * Packs a time value (hour, minute, second, nano) into a long.  Packing and unpacking can be done with or without time
@@ -70,9 +68,9 @@ public interface NanoTimePacker {
     @Garbage(Garbage.Type.RESULT)
     LocalTime unpackLocalTime(long packed);
     long packEpochMilli(long millisSinceEpoch);
-    long unpackEpochMilli(long packed);
+    long unpackMilliOfDay(long packed);
     long packEpochNano(long nanosSinceEpoch);
-    long unpackEpochNano(long packed);
+    long unpackNanoOfDay(long packed);
 
     /**
      * Returns a nano-time packer that performs no validation.
@@ -126,14 +124,11 @@ public interface NanoTimePacker {
         }
 
         @Override
-        default long unpackEpochMilli(final long packed) {
-            return Epoch.valueOf(validationMethod()).toEpochMilli(
-                    0, 0, 0,
-                    unpackHour(packed),
-                    unpackMinute(packed),
-                    unpackSecond(packed),
-                    unpackNano(packed) / NANOS_PER_MILLI
-            );
+        default long unpackMilliOfDay(final long packed) {
+            return unpackHour(packed) * MILLIS_PER_HOUR +
+                    unpackMinute(packed) * MILLIS_PER_MINUTE +
+                    unpackSecond(packed) * MILLIS_PER_SECOND +
+                    unpackNano(packed) / NANOS_PER_MILLI;
         }
 
         @Override
@@ -142,14 +137,11 @@ public interface NanoTimePacker {
         }
 
         @Override
-        default long unpackEpochNano(final long packed) {
-            return Epoch.valueOf(validationMethod()).toEpochNano(
-                    0, 0, 0,
-                    unpackHour(packed),
-                    unpackMinute(packed),
-                    unpackSecond(packed),
-                    unpackNano(packed)
-            );
+        default long unpackNanoOfDay(final long packed) {
+            return unpackHour(packed) * NANOS_PER_HOUR +
+                    unpackMinute(packed) * NANOS_PER_MINUTE +
+                    unpackSecond(packed) * (long)NANOS_PER_SECOND +
+                    unpackNano(packed);
         }
 
         @Override

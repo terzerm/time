@@ -36,6 +36,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.Assert.*;
+import static org.tools4j.time.base.TimeFactors.NANOS_PER_MILLI;
 import static org.tools4j.time.validate.ValidationMethod.INVALIDATE_RESULT;
 import static org.tools4j.time.validate.ValidationMethod.THROW_EXCEPTION;
 
@@ -102,11 +103,20 @@ public class MilliTimePackerTest {
         @Test
         public void packEpochMilli(final LocalTime localTime) throws Exception {
             for (final LocalDate date : DATES) {
+                final long epochMilli = localTime.atDate(date).toInstant(ZoneOffset.UTC).toEpochMilli();
                 for (final MilliTimePacker packer : PACKERS) {
-                    final int packed = packer.packEpochMilli(localTime.atDate(date).toInstant(ZoneOffset.UTC).toEpochMilli());
+                    final int packed = packer.packEpochMilli(epochMilli);
                     final LocalTime unpacked = packer.unpackLocalTime(packed);
                     assertEquals(packer + ": " + localTime + " -> " + packed, localTime, unpacked);
                 }
+            }
+        }
+
+        @Test
+        public void unpackMilliOfDay(final LocalTime localTime) throws Exception {
+            for (final MilliTimePacker packer : PACKERS) {
+                final long epochMilli = packer.unpackMilliOfDay(packer.pack(localTime));
+                assertEquals(packer + ": " + localTime, localTime.toNanoOfDay() / NANOS_PER_MILLI, epochMilli);
             }
         }
     }
