@@ -28,6 +28,9 @@ import org.tools4j.time.validate.DateValidator;
 import org.tools4j.time.validate.TimeValidator;
 import org.tools4j.time.validate.ValidationMethod;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import static org.tools4j.time.base.EpochImpl.divMod;
 
 /**
@@ -41,31 +44,44 @@ public interface Epoch {
 
     long toEpochDay(int year, int month, int day);
     long toEpochDay(int packedDate, DatePacker datePacker);
+    long toEpochDay(final LocalDate localDate);
     long toEpochSecond(int year, int month, int day);
     long toEpochSecond(int year, int month, int day, int hour, int minute);
     long toEpochSecond(int year, int month, int day, int hour, int minute, int second);
     long toEpochSecond(int packedDate, DatePacker datePacker);
     long toEpochSecond(int packedDate, DatePacker datePacker, int packedTime, TimePacker timePacker);
+    long toEpochSecond(final LocalDateTime localDateTime);
     long toEpochMilli(int year, int month, int day);
     long toEpochMilli(int year, int month, int day, int hour, int minute, int second, int milli);
     long toEpochMilli(int packedDate, DatePacker datePacker);
     long toEpochMilli(int packedDate, DatePacker datePacker, int packedMilliTime, MilliTimePacker milliTimePacker);
     long toEpochMilli(long packedDateTime, DateTimePacker dateTimePacker);
+    long toEpochMilli(final LocalDateTime localDateTime);
     long toEpochNano(int year, int month, int day);
     long toEpochNano(int year, int month, int day, int hour, int minute, int second, int nano);
     long toEpochNano(int packedDate, DatePacker datePacker, long packedNanoTime, NanoTimePacker nanoTimePacker);
+    long toEpochNano(final LocalDateTime localDateTime);
 
     int fromEpochDay(long daysSinceEpoch, DatePacker datePacker);
+    @Garbage(Garbage.Type.RESULT)
+    LocalDate fromEpochDay(long daysSinceEpoch);
     int fromEpochSecond(long secondsSinceEpoch, DatePacker datePacker);
     int fromEpochSecond(long secondsSinceEpoch, TimePacker timePacker);
     int fromEpochSecond(long secondsSinceEpoch, MilliTimePacker milliTimePacker);
     long fromEpochSecond(long secondsSinceEpoch, NanoTimePacker nanoTimePacker);
     long fromEpochSecond(long secondsSinceEpoch, DateTimePacker dateTimePacker);
+    @Garbage(Garbage.Type.RESULT)
+    LocalDateTime fromEpochSecond(long secondsSinceEpoch);
     int fromEpochMilli(long millisSinceEpoch, DatePacker datePacker);
     int fromEpochMilli(long millisSinceEpoch, MilliTimePacker milliTimePacker);
     long fromEpochMilli(long millisSinceEpoch, NanoTimePacker nanoTimePacker);
     long fromEpochMilli(long millisSinceEpoch, DateTimePacker dateTimePacker);
+    @Garbage(Garbage.Type.RESULT)
+    LocalDateTime fromEpochMilli(long millisSinceEpoch);
+    int fromEpochNano(long nanosSinceEpoch, DatePacker datePacker);
     long fromEpochNano(long nanosSinceEpoch, NanoTimePacker nanoTimePacker);
+    @Garbage(Garbage.Type.RESULT)
+    LocalDateTime fromEpochNano(long nanosSinceEpoch);
 
     static Epoch valueOf(final ValidationMethod validationMethod) {
         return EpochImpl.valueOf(validationMethod);
@@ -78,6 +94,11 @@ public interface Epoch {
                     datePacker.unpackMonth(packedDate),
                     datePacker.unpackDay(packedDate)
             );
+        }
+
+        @Override
+        default long toEpochDay(final LocalDate localDate) {
+            return toEpochDay(localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth());
         }
 
         default long toEpochSecond(final int year, final int month, final int day) {
@@ -111,6 +132,14 @@ public interface Epoch {
                     timePacker.unpackHour(packedTime),
                     timePacker.unpackMinute(packedTime),
                     timePacker.unpackSecond(packedTime)
+            );
+        }
+
+        @Override
+        default long toEpochSecond(final LocalDateTime localDateTime) {
+            return toEpochSecond(
+                    localDateTime.getYear(), localDateTime.getMonthValue(), localDateTime.getDayOfMonth(),
+                    localDateTime.getHour(), localDateTime.getMinute(), localDateTime.getSecond()
             );
         }
 
@@ -156,6 +185,14 @@ public interface Epoch {
             );
         }
 
+        @Override
+        default long toEpochMilli(final LocalDateTime localDateTime) {
+            return toEpochMilli(
+                    localDateTime.getYear(), localDateTime.getMonthValue(), localDateTime.getDayOfMonth(),
+                    localDateTime.getHour(), localDateTime.getMinute(), localDateTime.getSecond(), localDateTime.getNano() / TimeFactors.NANOS_PER_MILLI
+            );
+        }
+
         default long toEpochNano(final int year, final int month, final int day) {
             return toEpochDay(year, month, day) * TimeFactors.NANOS_PER_DAY;
         }
@@ -180,6 +217,22 @@ public interface Epoch {
                     nanoTimePacker.unpackSecond(packedNanoTime),
                     nanoTimePacker.unpackNano(packedNanoTime)
             );
+        }
+
+        @Override
+        default long toEpochNano(final LocalDateTime localDateTime) {
+            return toEpochNano(
+                    localDateTime.getYear(), localDateTime.getMonthValue(), localDateTime.getDayOfMonth(),
+                    localDateTime.getHour(), localDateTime.getMinute(), localDateTime.getSecond(), localDateTime.getNano()
+            );
+        }
+
+        @Override
+        @Garbage(Garbage.Type.RESULT)
+        default LocalDate fromEpochDay(final long daysSinceEpoch) {
+            final DatePacker packer = DatePacker.BINARY;
+            final int packed = fromEpochDay(daysSinceEpoch, packer);
+            return packer.unpackLocalDate(packed);
         }
 
         default int fromEpochSecond(final long secondsSinceEpoch, final DatePacker datePacker) {
@@ -229,6 +282,14 @@ public interface Epoch {
             );
         }
 
+        @Override
+        @Garbage(Garbage.Type.RESULT)
+        default LocalDateTime fromEpochSecond(final long secondsSinceEpoch) {
+            final DateTimePacker packer = DateTimePacker.BINARY;
+            final long packed = fromEpochSecond(secondsSinceEpoch, packer);
+            return packer.unpackLocalDateTime(packed);
+        }
+
         default int fromEpochMilli(final long millisSinceEpoch, final DatePacker datePacker) {
             return fromEpochDay(Math.floorDiv(millisSinceEpoch, TimeFactors.MILLIS_PER_DAY), datePacker);
         }
@@ -268,6 +329,14 @@ public interface Epoch {
             );
         }
 
+        @Override
+        @Garbage(Garbage.Type.RESULT)
+        default LocalDateTime fromEpochMilli(final long millisSinceEpoch) {
+            final DateTimePacker packer = DateTimePacker.BINARY;
+            final long packed = fromEpochMilli(millisSinceEpoch, packer);
+            return packer.unpackLocalDateTime(packed);
+        }
+
         default long fromEpochNano(final long nanosSinceEpoch, final NanoTimePacker nanoTimePacker) {
             final int timeInSeconds = divMod(nanosSinceEpoch, TimeFactors.NANOS_PER_SECOND, TimeFactors.SECONDS_PER_DAY);
             return nanoTimePacker.pack(
@@ -276,6 +345,30 @@ public interface Epoch {
                     Math.floorMod(timeInSeconds, TimeFactors.SECONDS_PER_MINUTE),
                     (int) Math.floorMod(nanosSinceEpoch, TimeFactors.NANOS_PER_SECOND)
             );
+        }
+
+        @Override
+        default int fromEpochNano(final long nanosSinceEpoch, final DatePacker datePacker) {
+            return fromEpochDay(nanosSinceEpoch / TimeFactors.NANOS_PER_DAY, datePacker);
+        }
+
+        @Override
+        @Garbage(Garbage.Type.RESULT)
+        default LocalDateTime fromEpochNano(final long nanosSinceEpoch) {
+            final DatePacker datePacker = DatePacker.BINARY;
+            final NanoTimePacker timePacker = NanoTimePacker.BINARY;
+            final int packedDate = fromEpochNano(nanosSinceEpoch, datePacker);
+            final long packedTime = fromEpochNano(nanosSinceEpoch, timePacker);
+            return datePacker.unpackNull(packedDate) & timePacker.unpackNull(packedTime) ? null :
+                    LocalDateTime.of(
+                            datePacker.unpackYear(packedDate),
+                            datePacker.unpackMonth(packedDate),
+                            datePacker.unpackDay(packedDate),
+                            timePacker.unpackHour(packedTime),
+                            timePacker.unpackMinute(packedTime),
+                            timePacker.unpackSecond(packedTime),
+                            timePacker.unpackNano(packedTime)
+                    );
         }
     }
 
