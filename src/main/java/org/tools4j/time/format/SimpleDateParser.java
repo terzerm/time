@@ -59,7 +59,7 @@ final class SimpleDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> int toYear(final S source, final AsciiReader<? super S> reader, final int offset) {
+    public <S> int parseYear(final S source, final AsciiReader<? super S> reader, final int offset) {
         final int off = offset + format().offsetYear();
         final byte ch1 = reader.readChar(source, off);
         final byte ch2 = reader.readChar(source, off + 1);
@@ -69,7 +69,7 @@ final class SimpleDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> int toMonth(final S source, final AsciiReader<? super S> reader, final int offset) {
+    public <S> int parseMonth(final S source, final AsciiReader<? super S> reader, final int offset) {
         final int off = offset + format().offsetMonth();
         final byte ch1 = reader.readChar(source, off);
         final byte ch2 = reader.readChar(source, off + 1);
@@ -77,7 +77,7 @@ final class SimpleDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> int toDay(final S source, final AsciiReader<? super S> reader, final int offset) {
+    public <S> int parseDay(final S source, final AsciiReader<? super S> reader, final int offset) {
         final int off = offset + format().offsetDay();
         final byte ch1 = reader.readChar(source, off);
         final byte ch2 = reader.readChar(source, off + 1);
@@ -85,33 +85,33 @@ final class SimpleDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> int toPacked(final S source, final AsciiReader<? super S> reader, final int offset, final Packing packing) {
-        final int year = toYear(source, reader, offset);
-        final int month = toMonth(source, reader, offset);
-        final int day = toDay(source, reader, offset);
+    public <S> int parseAsPackedDate(final S source, final AsciiReader<? super S> reader, final int offset, final Packing packing) {
+        final int year = parseYear(source, reader, offset);
+        final int month = parseMonth(source, reader, offset);
+        final int day = parseDay(source, reader, offset);
         return DatePacker.valueOf(packing).pack(year, month, day);
     }
 
     @Override
-    public <S> long toEpochDay(final S source, final AsciiReader<? super S> reader, final int offset) {
-        final int year = toYear(source, reader, offset);
-        final int month = toMonth(source, reader, offset);
-        final int day = toDay(source, reader, offset);
+    public <S> long parseAsEpochDay(final S source, final AsciiReader<? super S> reader, final int offset) {
+        final int year = parseYear(source, reader, offset);
+        final int month = parseMonth(source, reader, offset);
+        final int day = parseDay(source, reader, offset);
         return Epoch.valueOf(ValidationMethod.UNVALIDATED).toEpochDay(year, month, day);
     }
 
     @Garbage(Garbage.Type.RESULT)
     @Override
-    public <S> LocalDate toLocalDate(final S source, final AsciiReader<? super S> reader, final int offset) {
-        final int year = toYear(source, reader, offset);
-        final int month = toMonth(source, reader, offset);
-        final int day = toDay(source, reader, offset);
+    public <S> LocalDate parseAsLocalDate(final S source, final AsciiReader<? super S> reader, final int offset) {
+        final int year = parseYear(source, reader, offset);
+        final int month = parseMonth(source, reader, offset);
+        final int day = parseDay(source, reader, offset);
         DateValidator.THROW_EXCEPTION.validateDay(year, month, day);
         return LocalDate.of(year, month, day);
     }
 
     @Override
-    public <S> char toSeparator(final S source, final AsciiReader<? super S> reader, final int offset, final int separatorIndex) {
+    public <S> char parseSeparator(final S source, final AsciiReader<? super S> reader, final int offset, final int separatorIndex) {
         final int separatorOffset = separatorIndex == 0 ? format().offsetSeparatorOne() :
                 separatorIndex == 1 ? format().offsetSeparatorTwo() : -1;
         if (separatorOffset >= 0) {

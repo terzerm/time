@@ -23,30 +23,36 @@
  */
 package org.tools4j.time.format;
 
-final class Ascii {
+import java.io.IOException;
 
-    static final char NO_SEPARATOR = (char)Byte.MIN_VALUE;
+final class Appendables {
+    private static final int CAPACITY = DateFormat.YYYY_MM_DD.length() + 1 + TimeFormat.HH_MM_SS_NNNNNNNNN.length();
+    private static final ThreadLocal<StringBuilder> STRING_BUILDER_THREAD_LOCAL = ThreadLocal.withInitial(
+            () -> new StringBuilder(CAPACITY)
+    );
 
-    static byte validateSeparatorChar(final char separator) {
-        if ((separator >= 0 & separator <= Byte.MAX_VALUE) | separator == NO_SEPARATOR) {
-            return (byte)separator;
+    static StringBuilder acquireStringBuilder(final Appendable appendable) {
+        if (appendable instanceof StringBuilder) {
+            return (StringBuilder)appendable;
         }
-        throw new IllegalArgumentException("Illegal separator char: " + separator);
+        final StringBuilder temp = STRING_BUILDER_THREAD_LOCAL.get();
+        temp.setLength(0);
+        return temp;
     }
 
-    static int digit(final byte ch) {
-        return ch - '0';
+    static void appendAndReleaseStringBuilder(final Appendable appendable, final StringBuilder temp) {
+        if (appendable != temp) {
+            try {
+                appendable.append(temp);
+            } catch (final IOException e) {
+                throw new RuntimeException("Error while trying to append to Appendable", e);
+            } finally {
+                temp.setLength(0);
+            }
+        }
     }
 
-    static byte digit(final int digit) {
-        return (byte)(0x7f & ('0' + digit));
-    }
-
-    static boolean isDigit(final byte ch) {
-        return '0' <= ch & ch <= '9';
-    }
-
-    private Ascii() {
-        throw new RuntimeException("No Ascii for you!");
+    private Appendables() {
+        throw new RuntimeException("No Appendables for you!");
     }
 }

@@ -63,7 +63,7 @@ final class ValidatingDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> int toYear(final S source, final AsciiReader<? super S> reader, final int offset) {
+    public <S> int parseYear(final S source, final AsciiReader<? super S> reader, final int offset) {
         return toYear(validationMethod(), format(), source, reader, offset);
     }
     private static <S> int toYear(final ValidationMethod validationMethod, final DateFormat format,
@@ -84,7 +84,7 @@ final class ValidatingDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> int toMonth(final S source, final AsciiReader<? super S> reader, final int offset) {
+    public <S> int parseMonth(final S source, final AsciiReader<? super S> reader, final int offset) {
         return toMonth(validationMethod(), format(), source, reader, offset);
     }
     private static <S> int toMonth(final ValidationMethod validationMethod, final DateFormat format,
@@ -102,7 +102,7 @@ final class ValidatingDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> int toDay(final S source, final AsciiReader<? super S> reader, final int offset) {
+    public <S> int parseDay(final S source, final AsciiReader<? super S> reader, final int offset) {
         return toDay(validationMethod(), format(), source, reader, offset);
     }
     private static <S> int toDay(final ValidationMethod validationMethod, final DateFormat format,
@@ -123,10 +123,10 @@ final class ValidatingDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> int toPacked(final S source, final AsciiReader<? super S> reader, final int offset, final Packing packing) {
-        final int year = toYear(source, reader, offset);
-        final int month = toMonth(source, reader, offset);
-        final int day = toDay(source, reader, offset);
+    public <S> int parseAsPackedDate(final S source, final AsciiReader<? super S> reader, final int offset, final Packing packing) {
+        final int year = parseYear(source, reader, offset);
+        final int month = parseMonth(source, reader, offset);
+        final int day = parseDay(source, reader, offset);
         if (year != INVALID & month != INVALID & day != INVALID & hasValidSepatators(source, reader, offset)) {
             return DatePacker.valueOf(packing).pack(year, month, day);
         }
@@ -134,10 +134,10 @@ final class ValidatingDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> long toEpochDay(final S source, final AsciiReader<? super S> reader, final int offset) {
-        final int year = toYear(source, reader, offset);
-        final int month = toMonth(source, reader, offset);
-        final int day = toDay(source, reader, offset);
+    public <S> long parseAsEpochDay(final S source, final AsciiReader<? super S> reader, final int offset) {
+        final int year = parseYear(source, reader, offset);
+        final int month = parseMonth(source, reader, offset);
+        final int day = parseDay(source, reader, offset);
         if (hasValidSepatators(source, reader, offset)) {
             return Epoch.valueOf(ValidationMethod.UNVALIDATED).toEpochDay(year, month, day);
         }
@@ -146,10 +146,10 @@ final class ValidatingDateParser implements DateParser.Default {
 
     @Garbage(Garbage.Type.RESULT)
     @Override
-    public <S> LocalDate toLocalDate(final S source, final AsciiReader<? super S> reader, final int offset) {
-        final int year = toYear(source, reader, offset);
-        final int month = toMonth(source, reader, offset);
-        final int day = toDay(source, reader, offset);
+    public <S> LocalDate parseAsLocalDate(final S source, final AsciiReader<? super S> reader, final int offset) {
+        final int year = parseYear(source, reader, offset);
+        final int month = parseMonth(source, reader, offset);
+        final int day = parseDay(source, reader, offset);
         DateValidator.THROW_EXCEPTION.validateDay(year, month, day);
         if (hasValidSepatators(source, reader, offset)) {
             return LocalDate.of(year, month, day);
@@ -158,7 +158,7 @@ final class ValidatingDateParser implements DateParser.Default {
     }
 
     @Override
-    public <S> char toSeparator(final S source, final AsciiReader<? super S> reader, final int offset, final int separatorIndex) {
+    public <S> char parseSeparator(final S source, final AsciiReader<? super S> reader, final int offset, final int separatorIndex) {
         final int separatorOffset = separatorIndex == 0 ? format().offsetSeparatorOne() :
                 separatorIndex == 1 ? format().offsetSeparatorTwo() : -1;
         if (separatorOffset >= 0) {

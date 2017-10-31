@@ -32,6 +32,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.tools4j.time.base.EpochImpl.divMod;
+import static org.tools4j.time.base.TimeFactors.*;
 
 /**
  * Converts dates to days since epoch and vice versa.
@@ -102,7 +103,7 @@ public interface Epoch {
         }
 
         default long toEpochSecond(final int year, final int month, final int day) {
-            return toEpochDay(year, month, day) * TimeFactors.SECONDS_PER_DAY;
+            return toEpochDay(year, month, day) * SECONDS_PER_DAY;
         }
 
         default long toEpochSecond(final int year, final int month, final int day,
@@ -116,11 +117,11 @@ public interface Epoch {
                 return INVALID_EPOCH;
             }
             return toEpochSecond(year, month, day)
-                    + hour * TimeFactors.SECONDS_PER_HOUR + minute * TimeFactors.SECONDS_PER_MINUTE + second;
+                    + hour * SECONDS_PER_HOUR + minute * SECONDS_PER_MINUTE + second;
         }
 
         default long toEpochSecond(final int packedDate, final DatePacker datePacker) {
-            return toEpochDay(packedDate, datePacker) * TimeFactors.SECONDS_PER_DAY;
+            return toEpochDay(packedDate, datePacker) * SECONDS_PER_DAY;
         }
 
         default long toEpochSecond(final int packedDate, final DatePacker datePacker,
@@ -144,7 +145,7 @@ public interface Epoch {
         }
 
         default long toEpochMilli(final int year, final int month, final int day) {
-            return toEpochDay(year, month, day) * TimeFactors.MILLIS_PER_DAY;
+            return toEpochDay(year, month, day) * MILLIS_PER_DAY;
         }
 
         default long toEpochMilli(final int year, final int month, final int day,
@@ -153,11 +154,11 @@ public interface Epoch {
                 return INVALID_EPOCH;
             }
             return toEpochMilli(year, month, day)
-                    + hour * TimeFactors.MILLIS_PER_HOUR + minute * TimeFactors.MILLIS_PER_MINUTE + second * TimeFactors.MILLIS_PER_SECOND + milli;
+                    + hour * MILLIS_PER_HOUR + minute * MILLIS_PER_MINUTE + second * MILLIS_PER_SECOND + milli;
         }
 
         default long toEpochMilli(final int packedDate, final DatePacker datePacker) {
-            return toEpochDay(packedDate, datePacker) * TimeFactors.MILLIS_PER_DAY;
+            return toEpochDay(packedDate, datePacker) * MILLIS_PER_DAY;
         }
 
         default long toEpochMilli(final int packedDate, final DatePacker datePacker,
@@ -189,12 +190,12 @@ public interface Epoch {
         default long toEpochMilli(final LocalDateTime localDateTime) {
             return toEpochMilli(
                     localDateTime.getYear(), localDateTime.getMonthValue(), localDateTime.getDayOfMonth(),
-                    localDateTime.getHour(), localDateTime.getMinute(), localDateTime.getSecond(), localDateTime.getNano() / TimeFactors.NANOS_PER_MILLI
+                    localDateTime.getHour(), localDateTime.getMinute(), localDateTime.getSecond(), localDateTime.getNano() / NANOS_PER_MILLI
             );
         }
 
         default long toEpochNano(final int year, final int month, final int day) {
-            return toEpochDay(year, month, day) * TimeFactors.NANOS_PER_DAY;
+            return toEpochDay(year, month, day) * NANOS_PER_DAY;
         }
 
         default long toEpochNano(final int year, final int month, final int day,
@@ -203,7 +204,7 @@ public interface Epoch {
                 return INVALID_EPOCH;
             }
             return toEpochNano(year, month, day)
-                    + hour * TimeFactors.NANOS_PER_HOUR + minute * TimeFactors.NANOS_PER_MINUTE + second * TimeFactors.NANOS_PER_SECOND + nano;
+                    + hour * NANOS_PER_HOUR + minute * NANOS_PER_MINUTE + second * NANOS_PER_SECOND + nano;
         }
 
         default long toEpochNano(final int packedDate, final DatePacker datePacker,
@@ -236,34 +237,34 @@ public interface Epoch {
         }
 
         default int fromEpochSecond(final long secondsSinceEpoch, final DatePacker datePacker) {
-            return fromEpochDay(Math.floorDiv(secondsSinceEpoch, TimeFactors.SECONDS_PER_DAY), datePacker);
+            return fromEpochDay(Math.floorDiv(secondsSinceEpoch, SECONDS_PER_DAY), datePacker);
         }
 
         default int fromEpochSecond(final long secondsSinceEpoch, final TimePacker timePacker) {
-            final int timeInSeconds = (int) Math.floorMod(secondsSinceEpoch, TimeFactors.SECONDS_PER_DAY);
+            final int timeInSeconds = (int) Math.floorMod(secondsSinceEpoch, SECONDS_PER_DAY);
             return timePacker.pack(
-                    divMod(timeInSeconds, TimeFactors.SECONDS_PER_HOUR, TimeFactors.HOURS_PER_DAY),
-                    divMod(timeInSeconds, TimeFactors.SECONDS_PER_MINUTE, TimeFactors.MINUTES_PER_HOUR),
-                    Math.floorMod(timeInSeconds, TimeFactors.SECONDS_PER_MINUTE)
+                    divMod(timeInSeconds, SECONDS_PER_HOUR, HOURS_PER_DAY),
+                    divMod(timeInSeconds, SECONDS_PER_MINUTE, MINUTES_PER_HOUR),
+                    Math.floorMod(timeInSeconds, SECONDS_PER_MINUTE)
             );
         }
 
         default int fromEpochSecond(final long secondsSinceEpoch, final MilliTimePacker milliTimePacker) {
-            final int timeInSeconds = (int) Math.floorMod(secondsSinceEpoch, TimeFactors.SECONDS_PER_DAY);
+            final int timeInSeconds = (int) Math.floorMod(secondsSinceEpoch, SECONDS_PER_DAY);
             return milliTimePacker.pack(
-                    divMod(timeInSeconds, TimeFactors.SECONDS_PER_HOUR, TimeFactors.HOURS_PER_DAY),
-                    divMod(timeInSeconds, TimeFactors.SECONDS_PER_MINUTE, TimeFactors.MINUTES_PER_HOUR),
-                    Math.floorMod(timeInSeconds, TimeFactors.SECONDS_PER_MINUTE),
+                    divMod(timeInSeconds, SECONDS_PER_HOUR, HOURS_PER_DAY),
+                    divMod(timeInSeconds, SECONDS_PER_MINUTE, MINUTES_PER_HOUR),
+                    Math.floorMod(timeInSeconds, SECONDS_PER_MINUTE),
                     0
             );
         }
 
         default long fromEpochSecond(final long secondsSinceEpoch, final NanoTimePacker nanoTimePacker) {
-            final int timeInSeconds = (int) Math.floorMod(secondsSinceEpoch, TimeFactors.SECONDS_PER_DAY);
+            final int timeInSeconds = (int) Math.floorMod(secondsSinceEpoch, SECONDS_PER_DAY);
             return nanoTimePacker.pack(
-                    divMod(timeInSeconds, TimeFactors.SECONDS_PER_HOUR, TimeFactors.HOURS_PER_DAY),
-                    divMod(timeInSeconds, TimeFactors.SECONDS_PER_MINUTE, TimeFactors.MINUTES_PER_HOUR),
-                    Math.floorMod(timeInSeconds, TimeFactors.SECONDS_PER_MINUTE),
+                    divMod(timeInSeconds, SECONDS_PER_HOUR, HOURS_PER_DAY),
+                    divMod(timeInSeconds, SECONDS_PER_MINUTE, MINUTES_PER_HOUR),
+                    Math.floorMod(timeInSeconds, SECONDS_PER_MINUTE),
                     0
             );
         }
@@ -271,14 +272,14 @@ public interface Epoch {
         default long fromEpochSecond(final long secondsSinceEpoch, final DateTimePacker dateTimePacker) {
             final DatePacker datePacker = DatePacker.valueOf(Packing.BINARY, dateTimePacker.validationMethod());
             final int packedDate = fromEpochSecond(secondsSinceEpoch, datePacker);
-            final int timeInSeconds = (int) Math.floorMod(secondsSinceEpoch, TimeFactors.SECONDS_PER_DAY);
+            final int timeInSeconds = (int) Math.floorMod(secondsSinceEpoch, SECONDS_PER_DAY);
             return dateTimePacker.pack(
                     datePacker.unpackYear(packedDate),
                     datePacker.unpackMonth(packedDate),
                     datePacker.unpackDay(packedDate),
-                    divMod(timeInSeconds, TimeFactors.SECONDS_PER_HOUR, TimeFactors.HOURS_PER_DAY),
-                    divMod(timeInSeconds, TimeFactors.SECONDS_PER_MINUTE, TimeFactors.MINUTES_PER_HOUR),
-                    Math.floorMod(timeInSeconds, TimeFactors.SECONDS_PER_MINUTE)
+                    divMod(timeInSeconds, SECONDS_PER_HOUR, HOURS_PER_DAY),
+                    divMod(timeInSeconds, SECONDS_PER_MINUTE, MINUTES_PER_HOUR),
+                    Math.floorMod(timeInSeconds, SECONDS_PER_MINUTE)
             );
         }
 
@@ -291,41 +292,41 @@ public interface Epoch {
         }
 
         default int fromEpochMilli(final long millisSinceEpoch, final DatePacker datePacker) {
-            return fromEpochDay(Math.floorDiv(millisSinceEpoch, TimeFactors.MILLIS_PER_DAY), datePacker);
+            return fromEpochDay(Math.floorDiv(millisSinceEpoch, MILLIS_PER_DAY), datePacker);
         }
 
         default int fromEpochMilli(final long millisSinceEpoch, final MilliTimePacker milliTimePacker) {
-            final int timeInMillis = (int) Math.floorMod(millisSinceEpoch, TimeFactors.MILLIS_PER_DAY);
+            final int timeInMillis = (int) Math.floorMod(millisSinceEpoch, MILLIS_PER_DAY);
             return milliTimePacker.pack(
-                    divMod(timeInMillis, TimeFactors.MILLIS_PER_HOUR, TimeFactors.HOURS_PER_DAY),
-                    divMod(timeInMillis, TimeFactors.MILLIS_PER_MINUTE, TimeFactors.MINUTES_PER_HOUR),
-                    divMod(timeInMillis, TimeFactors.MILLIS_PER_SECOND, TimeFactors.SECONDS_PER_MINUTE),
-                    Math.floorMod(timeInMillis, TimeFactors.MILLIS_PER_SECOND)
+                    divMod(timeInMillis, MILLIS_PER_HOUR, HOURS_PER_DAY),
+                    divMod(timeInMillis, MILLIS_PER_MINUTE, MINUTES_PER_HOUR),
+                    divMod(timeInMillis, MILLIS_PER_SECOND, SECONDS_PER_MINUTE),
+                    Math.floorMod(timeInMillis, MILLIS_PER_SECOND)
             );
         }
 
         default long fromEpochMilli(final long millisSinceEpoch, final NanoTimePacker nanoTimePacker) {
-            final int timeInMillis = (int) Math.floorMod(millisSinceEpoch, TimeFactors.MILLIS_PER_DAY);
+            final int timeInMillis = (int) Math.floorMod(millisSinceEpoch, MILLIS_PER_DAY);
             return nanoTimePacker.pack(
-                    divMod(timeInMillis, TimeFactors.MILLIS_PER_HOUR, TimeFactors.HOURS_PER_DAY),
-                    divMod(timeInMillis, TimeFactors.MILLIS_PER_MINUTE, TimeFactors.MINUTES_PER_HOUR),
-                    divMod(timeInMillis, TimeFactors.MILLIS_PER_SECOND, TimeFactors.SECONDS_PER_MINUTE),
-                    Math.floorMod(timeInMillis, TimeFactors.MILLIS_PER_SECOND) * TimeFactors.NANOS_PER_MILLI
+                    divMod(timeInMillis, MILLIS_PER_HOUR, HOURS_PER_DAY),
+                    divMod(timeInMillis, MILLIS_PER_MINUTE, MINUTES_PER_HOUR),
+                    divMod(timeInMillis, MILLIS_PER_SECOND, SECONDS_PER_MINUTE),
+                    Math.floorMod(timeInMillis, MILLIS_PER_SECOND) * NANOS_PER_MILLI
             );
         }
 
         default long fromEpochMilli(final long millisSinceEpoch, final DateTimePacker dateTimePacker) {
             final DatePacker datePacker = DatePacker.valueOf(Packing.BINARY, dateTimePacker.validationMethod());
             final int packedDate = fromEpochMilli(millisSinceEpoch, datePacker);
-            final int timeInMillis = (int) Math.floorMod(millisSinceEpoch, TimeFactors.MILLIS_PER_DAY);
+            final int timeInMillis = (int) Math.floorMod(millisSinceEpoch, MILLIS_PER_DAY);
             return dateTimePacker.pack(
                     datePacker.unpackYear(packedDate),
                     datePacker.unpackMonth(packedDate),
                     datePacker.unpackDay(packedDate),
-                    divMod(timeInMillis, TimeFactors.MILLIS_PER_HOUR, TimeFactors.HOURS_PER_DAY),
-                    divMod(timeInMillis, TimeFactors.MILLIS_PER_MINUTE, TimeFactors.MINUTES_PER_HOUR),
-                    divMod(timeInMillis, TimeFactors.MILLIS_PER_SECOND, TimeFactors.SECONDS_PER_MINUTE),
-                    Math.floorMod(timeInMillis, TimeFactors.MILLIS_PER_SECOND)
+                    divMod(timeInMillis, MILLIS_PER_HOUR, HOURS_PER_DAY),
+                    divMod(timeInMillis, MILLIS_PER_MINUTE, MINUTES_PER_HOUR),
+                    divMod(timeInMillis, MILLIS_PER_SECOND, SECONDS_PER_MINUTE),
+                    Math.floorMod(timeInMillis, MILLIS_PER_SECOND)
             );
         }
 
@@ -338,18 +339,18 @@ public interface Epoch {
         }
 
         default long fromEpochNano(final long nanosSinceEpoch, final NanoTimePacker nanoTimePacker) {
-            final int timeInSeconds = divMod(nanosSinceEpoch, TimeFactors.NANOS_PER_SECOND, TimeFactors.SECONDS_PER_DAY);
+            final int timeInSeconds = divMod(nanosSinceEpoch, NANOS_PER_SECOND, SECONDS_PER_DAY);
             return nanoTimePacker.pack(
-                    divMod(timeInSeconds, TimeFactors.SECONDS_PER_HOUR, TimeFactors.HOURS_PER_DAY),
-                    divMod(timeInSeconds, TimeFactors.SECONDS_PER_MINUTE, TimeFactors.MINUTES_PER_HOUR),
-                    Math.floorMod(timeInSeconds, TimeFactors.SECONDS_PER_MINUTE),
-                    (int) Math.floorMod(nanosSinceEpoch, TimeFactors.NANOS_PER_SECOND)
+                    divMod(timeInSeconds, SECONDS_PER_HOUR, HOURS_PER_DAY),
+                    divMod(timeInSeconds, SECONDS_PER_MINUTE, MINUTES_PER_HOUR),
+                    Math.floorMod(timeInSeconds, SECONDS_PER_MINUTE),
+                    (int) Math.floorMod(nanosSinceEpoch, NANOS_PER_SECOND)
             );
         }
 
         @Override
         default int fromEpochNano(final long nanosSinceEpoch, final DatePacker datePacker) {
-            return fromEpochDay(nanosSinceEpoch / TimeFactors.NANOS_PER_DAY, datePacker);
+            return fromEpochDay(Math.floorDiv(nanosSinceEpoch, NANOS_PER_DAY), datePacker);
         }
 
         @Override

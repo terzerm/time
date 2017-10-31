@@ -131,7 +131,7 @@ public interface TimePacker {
 
         @Override
         default int packEpochMilli(final long millisSinceEpoch) {
-            return packEpochSecond(millisSinceEpoch / MILLIS_PER_SECOND);
+            return packEpochSecond(Math.floorDiv(millisSinceEpoch, MILLIS_PER_SECOND));
         }
 
         @Override

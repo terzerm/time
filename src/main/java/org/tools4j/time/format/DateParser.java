@@ -37,45 +37,48 @@ public interface DateParser {
     byte INVALID_SEPARATOR = -1;
     char DEFAULT_SEPARATOR = '-';
     char NO_SEPARATOR = Ascii.NO_SEPARATOR;
+
     DateFormat format();
     char separator();
     ValidationMethod validationMethod();
-    int toYear(CharSequence charSequence);
-    int toYear(CharSequence charSequence, int offset);
-    <S> int toYear(S source, AsciiReader<? super S> reader);
-    <S> int toYear(S source, AsciiReader<? super S> reader, int offset);
-    int toMonth(CharSequence charSequence);
-    int toMonth(CharSequence charSequence, int offset);
-    <S> int toMonth(S source, AsciiReader<? super S> reader);
-    <S> int toMonth(S source, AsciiReader<? super S> reader, int offset);
-    int toDay(CharSequence charSequence);
-    int toDay(CharSequence charSequence, int offset);
-    <S> int toDay(S source, AsciiReader<? super S> reader);
-    <S> int toDay(S source, AsciiReader<? super S> reader, int offset);
-    int toPacked(CharSequence charSequence, Packing packing);
-    int toPacked(CharSequence charSequence, int offset, Packing packing);
-    <S> int toPacked(S source, AsciiReader<? super S> reader, Packing packing);
-    <S> int toPacked(S source, AsciiReader<? super S> reader, int offset, Packing packing);
-    long toEpochDay(CharSequence charSequence);
-    long toEpochDay(CharSequence charSequence, int offset);
-    <S> long toEpochDay(S source, AsciiReader<? super S> reader);
-    <S> long toEpochDay(S source, AsciiReader<? super S> reader, int offset);
-    long toEpochMilli(CharSequence charSequence);
-    long toEpochMilli(CharSequence charSequence, int offset);
-    <S> long toEpochMilli(S source, AsciiReader<? super S> reader);
-    <S> long toEpochMilli(S source, AsciiReader<? super S> reader, int offset);
+
+    int parseYear(CharSequence charSequence);
+    int parseYear(CharSequence charSequence, int offset);
+    <S> int parseYear(S source, AsciiReader<? super S> reader);
+    <S> int parseYear(S source, AsciiReader<? super S> reader, int offset);
+    int parseMonth(CharSequence charSequence);
+    int parseMonth(CharSequence charSequence, int offset);
+    <S> int parseMonth(S source, AsciiReader<? super S> reader);
+    <S> int parseMonth(S source, AsciiReader<? super S> reader, int offset);
+    int parseDay(CharSequence charSequence);
+    int parseDay(CharSequence charSequence, int offset);
+    <S> int parseDay(S source, AsciiReader<? super S> reader);
+    <S> int parseDay(S source, AsciiReader<? super S> reader, int offset);
+    int parseAsPackedDate(CharSequence charSequence, Packing packing);
+    int parseAsPackedDate(CharSequence charSequence, int offset, Packing packing);
+    <S> int parseAsPackedDate(S source, AsciiReader<? super S> reader, Packing packing);
+    <S> int parseAsPackedDate(S source, AsciiReader<? super S> reader, int offset, Packing packing);
+    long parseAsEpochDay(CharSequence charSequence);
+    long parseAsEpochDay(CharSequence charSequence, int offset);
+    <S> long parseAsEpochDay(S source, AsciiReader<? super S> reader);
+    <S> long parseAsEpochDay(S source, AsciiReader<? super S> reader, int offset);
+    long parseAsEpochMilli(CharSequence charSequence);
+    long parseAsEpochMilli(CharSequence charSequence, int offset);
+    <S> long parseAsEpochMilli(S source, AsciiReader<? super S> reader);
+    <S> long parseAsEpochMilli(S source, AsciiReader<? super S> reader, int offset);
     @Garbage(Garbage.Type.RESULT)
-    LocalDate toLocalDate(CharSequence charSequence);
+    LocalDate parseAsLocalDate(CharSequence charSequence);
     @Garbage(Garbage.Type.RESULT)
-    LocalDate toLocalDate(CharSequence charSequence, int offset);
+    LocalDate parseAsLocalDate(CharSequence charSequence, int offset);
     @Garbage(Garbage.Type.RESULT)
-    <S> LocalDate toLocalDate(S source, AsciiReader<? super S> reader);
+    <S> LocalDate parseAsLocalDate(S source, AsciiReader<? super S> reader);
     @Garbage(Garbage.Type.RESULT)
-    <S> LocalDate toLocalDate(S source, AsciiReader<? super S> reader, int offset);
-    char toSeparator(CharSequence charSequence, int separatorIndex);
-    char toSeparator(CharSequence charSequence, int offset, int separatorIndex);
-    <S> char toSeparator(S source, AsciiReader<? super S> reader, int separatorIndex);
-    <S> char toSeparator(S source, AsciiReader<? super S> reader, int offset, int separatorIndex);
+    <S> LocalDate parseAsLocalDate(S source, AsciiReader<? super S> reader, int offset);
+    char parseSeparator(CharSequence charSequence, int separatorIndex);
+    char parseSeparator(CharSequence charSequence, int offset, int separatorIndex);
+    <S> char parseSeparator(S source, AsciiReader<? super S> reader, int separatorIndex);
+    <S> char parseSeparator(S source, AsciiReader<? super S> reader, int offset, int separatorIndex);
+
     boolean isValid(CharSequence charSequence);
     boolean isValid(CharSequence charSequence, int offset);
     <S> boolean isValid(S source, AsciiReader<? super S> reader);
@@ -131,110 +134,110 @@ public interface DateParser {
 
     interface Default extends DateParser {
         @Override
-        default int toYear(final CharSequence charSequence) {
-            return toYear(charSequence, AsciiReader.CHAR_SEQUENCE);
+        default int parseYear(final CharSequence charSequence) {
+            return parseYear(charSequence, AsciiReader.CHAR_SEQUENCE);
         }
         @Override
-        default int toYear(final CharSequence charSequence, final int offset) {
-            return toYear(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
+        default int parseYear(final CharSequence charSequence, final int offset) {
+            return parseYear(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
         }
         @Override
-        default <S> int toYear(final S source, final AsciiReader<? super S> reader) {
-            return toYear(source, reader, 0);
+        default <S> int parseYear(final S source, final AsciiReader<? super S> reader) {
+            return parseYear(source, reader, 0);
         }
         @Override
-        default int toMonth(final CharSequence charSequence) {
-            return toMonth(charSequence, AsciiReader.CHAR_SEQUENCE);
+        default int parseMonth(final CharSequence charSequence) {
+            return parseMonth(charSequence, AsciiReader.CHAR_SEQUENCE);
         }
         @Override
-        default int toMonth(final CharSequence charSequence, final int offset) {
-            return toMonth(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
+        default int parseMonth(final CharSequence charSequence, final int offset) {
+            return parseMonth(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
         }
         @Override
-        default <S> int toMonth(final S source, final AsciiReader<? super S> reader) {
-            return toMonth(source, reader, 0);
+        default <S> int parseMonth(final S source, final AsciiReader<? super S> reader) {
+            return parseMonth(source, reader, 0);
         }
         @Override
-        default int toDay(final CharSequence charSequence) {
-            return toDay(charSequence, AsciiReader.CHAR_SEQUENCE);
+        default int parseDay(final CharSequence charSequence) {
+            return parseDay(charSequence, AsciiReader.CHAR_SEQUENCE);
         }
         @Override
-        default int toDay(final CharSequence charSequence, final int offset) {
-            return toDay(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
+        default int parseDay(final CharSequence charSequence, final int offset) {
+            return parseDay(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
         }
         @Override
-        default <S> int toDay(final S source, final AsciiReader<? super S> reader) {
-            return toDay(source, reader, 0);
+        default <S> int parseDay(final S source, final AsciiReader<? super S> reader) {
+            return parseDay(source, reader, 0);
         }
         @Override
-        default int toPacked(final CharSequence charSequence, final Packing packing) {
-            return toPacked(charSequence, AsciiReader.CHAR_SEQUENCE, packing);
+        default int parseAsPackedDate(final CharSequence charSequence, final Packing packing) {
+            return parseAsPackedDate(charSequence, AsciiReader.CHAR_SEQUENCE, packing);
         }
         @Override
-        default int toPacked(final CharSequence charSequence, final int offset, final Packing packing) {
-            return toPacked(charSequence, AsciiReader.CHAR_SEQUENCE, offset, packing);
+        default int parseAsPackedDate(final CharSequence charSequence, final int offset, final Packing packing) {
+            return parseAsPackedDate(charSequence, AsciiReader.CHAR_SEQUENCE, offset, packing);
         }
         @Override
-        default <S> int toPacked(final S source, final AsciiReader<? super S> reader, final Packing packing) {
-            return toPacked(source, reader, 0, packing);
+        default <S> int parseAsPackedDate(final S source, final AsciiReader<? super S> reader, final Packing packing) {
+            return parseAsPackedDate(source, reader, 0, packing);
         }
         @Override
-        default long toEpochDay(final CharSequence charSequence) {
-            return toEpochDay(charSequence, AsciiReader.CHAR_SEQUENCE);
+        default long parseAsEpochDay(final CharSequence charSequence) {
+            return parseAsEpochDay(charSequence, AsciiReader.CHAR_SEQUENCE);
         }
         @Override
-        default long toEpochDay(final CharSequence charSequence, final int offset) {
-            return toEpochDay(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
+        default long parseAsEpochDay(final CharSequence charSequence, final int offset) {
+            return parseAsEpochDay(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
         }
         @Override
-        default <S> long toEpochDay(final S source, final AsciiReader<? super S> reader) {
-            return toEpochDay(source, reader, 0);
+        default <S> long parseAsEpochDay(final S source, final AsciiReader<? super S> reader) {
+            return parseAsEpochDay(source, reader, 0);
         }
         @Override
-        default long toEpochMilli(final CharSequence charSequence) {
-            return toEpochMilli(charSequence, AsciiReader.CHAR_SEQUENCE);
+        default long parseAsEpochMilli(final CharSequence charSequence) {
+            return parseAsEpochMilli(charSequence, AsciiReader.CHAR_SEQUENCE);
         }
         @Override
-        default long toEpochMilli(final CharSequence charSequence, final int offset) {
-            return toEpochMilli(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
+        default long parseAsEpochMilli(final CharSequence charSequence, final int offset) {
+            return parseAsEpochMilli(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
         }
         @Override
-        default <S> long toEpochMilli(final S source, final AsciiReader<? super S> reader) {
-            return toEpochMilli(source, reader, 0);
+        default <S> long parseAsEpochMilli(final S source, final AsciiReader<? super S> reader) {
+            return parseAsEpochMilli(source, reader, 0);
         }
         @Override
-        default <S> long toEpochMilli(final S source, final AsciiReader<? super S> reader, final int offset) {
-            final long epochDay = toEpochDay(source, reader, offset);
+        default <S> long parseAsEpochMilli(final S source, final AsciiReader<? super S> reader, final int offset) {
+            final long epochDay = parseAsEpochDay(source, reader, offset);
             if (epochDay != INVALID_EPOCH) {
-                return toEpochDay(source, reader, offset) * TimeFactors.MILLIS_PER_DAY;
+                return parseAsEpochDay(source, reader, offset) * TimeFactors.MILLIS_PER_DAY;
             }
             return INVALID_EPOCH;
         }
         @Override
-        default LocalDate toLocalDate(final CharSequence charSequence) {
-            return toLocalDate(charSequence, AsciiReader.CHAR_SEQUENCE);
+        default LocalDate parseAsLocalDate(final CharSequence charSequence) {
+            return parseAsLocalDate(charSequence, AsciiReader.CHAR_SEQUENCE);
         }
         @Garbage(Garbage.Type.RESULT)
         @Override
-        default LocalDate toLocalDate(final CharSequence charSequence, final int offset) {
-            return toLocalDate(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
+        default LocalDate parseAsLocalDate(final CharSequence charSequence, final int offset) {
+            return parseAsLocalDate(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
         }
         @Garbage(Garbage.Type.RESULT)
         @Override
-        default <S> LocalDate toLocalDate(final S source, final AsciiReader<? super S> reader) {
-            return toLocalDate(source, reader, 0);
+        default <S> LocalDate parseAsLocalDate(final S source, final AsciiReader<? super S> reader) {
+            return parseAsLocalDate(source, reader, 0);
         }
         @Override
-        default char toSeparator(final CharSequence charSequence, final int separatorIndex) {
-            return toSeparator(charSequence, AsciiReader.CHAR_SEQUENCE, 0, separatorIndex);
+        default char parseSeparator(final CharSequence charSequence, final int separatorIndex) {
+            return parseSeparator(charSequence, AsciiReader.CHAR_SEQUENCE, 0, separatorIndex);
         }
         @Override
-        default char toSeparator(final CharSequence charSequence, final int offset, final int separatorIndex) {
-            return toSeparator(charSequence, AsciiReader.CHAR_SEQUENCE, offset, separatorIndex);
+        default char parseSeparator(final CharSequence charSequence, final int offset, final int separatorIndex) {
+            return parseSeparator(charSequence, AsciiReader.CHAR_SEQUENCE, offset, separatorIndex);
         }
         @Override
-        default <S> char toSeparator(final S source, final AsciiReader<? super S> reader, final int separatorIndex) {
-            return toSeparator(source, reader, 0, separatorIndex);
+        default <S> char parseSeparator(final S source, final AsciiReader<? super S> reader, final int separatorIndex) {
+            return parseSeparator(source, reader, 0, separatorIndex);
         }
         @Override
         default boolean isValid(final CharSequence charSequence) {
