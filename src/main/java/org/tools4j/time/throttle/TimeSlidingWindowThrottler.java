@@ -28,7 +28,7 @@ import org.tools4j.time.base.TimeFactors;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-public class TimeSlidingWIndowThrottler {
+public class TimeSlidingWindowThrottler {
 
     private static final int DEFAULT_SLIDING_WINDOW_SIZE = 32;
     private static final long DEFAULT_WINDOW_SLIDING_TIME_NANOS = TimeUnit.SECONDS.toNanos(1);
@@ -39,7 +39,7 @@ public class TimeSlidingWIndowThrottler {
     private final SlidingCountWindow slidingCountWindow;
     private final Invokable invokableWithInitializer;
 
-    private TimeSlidingWIndowThrottler(final Invokable invokable, final double maxInvocationsPerSecond,
+    private TimeSlidingWindowThrottler(final Invokable invokable, final double maxInvocationsPerSecond,
                                        final int slidingWindowSize, final long windowSlidingTimeNanos) {
         this.invokable = Objects.requireNonNull(invokable);
         if (maxInvocationsPerSecond <= 0) {
@@ -74,7 +74,7 @@ public class TimeSlidingWIndowThrottler {
     public static Invokable forInvokable(final Invokable invokable, final double maxInvocationsPerSecond,
                                          final int slidingWindowSize, final long windowSlidingTime, final TimeUnit slidingTimeUnit) {
         final long windowSlidingTimeNanos = slidingTimeUnit.toNanos(windowSlidingTime);
-        return new TimeSlidingWIndowThrottler(invokable, maxInvocationsPerSecond, slidingWindowSize, windowSlidingTimeNanos)
+        return new TimeSlidingWindowThrottler(invokable, maxInvocationsPerSecond, slidingWindowSize, windowSlidingTimeNanos)
                 .invokableWithInitializer;
     }
 

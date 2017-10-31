@@ -35,7 +35,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Unit test for {@link PeriodicResetThrottler}, {@link TimeSlidingWIndowThrottler} and
+ * Unit test for {@link PeriodicResetThrottler}, {@link TimeSlidingWindowThrottler} and
  * {@link CountSlidingWindowThrottler}.
  */
 @RunWith(Spockito.class)
@@ -71,7 +71,7 @@ public class ThrottlerTest {
     }
     @Test
     public void timeSlidingWindow_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
-        runnable(TimeSlidingWIndowThrottler::forRunnable, updatesPerSecond, runningTimeSeconds);
+        runnable(TimeSlidingWindowThrottler::forRunnable, updatesPerSecond, runningTimeSeconds);
     }
     @Test
     public void countSlidingWindow_runnable(final double updatesPerSecond, final int runningTimeSeconds) {
@@ -90,7 +90,7 @@ public class ThrottlerTest {
     }
     @Test
     public void timeSlidingWindow_invokable(final double updatesPerSecond, final int runningTimeSeconds) {
-        invokable(TimeSlidingWIndowThrottler::forInvokable, updatesPerSecond, runningTimeSeconds);
+        invokable(TimeSlidingWindowThrottler::forInvokable, updatesPerSecond, runningTimeSeconds);
     }
     @Test
     public void countSlidingWindow_invokable(final double updatesPerSecond, final int runningTimeSeconds) {
