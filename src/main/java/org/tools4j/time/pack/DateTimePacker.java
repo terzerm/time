@@ -59,11 +59,12 @@ public interface DateTimePacker {
     long NULL = Long.MAX_VALUE;
     Packing packing();
     ValidationMethod validationMethod();
-    @Garbage(Garbage.Type.RESULT)
     DateTimePacker forValidationMethod(ValidationMethod validationMethod);
     long pack(int year, int month, int day);
     long pack(int year, int month, int day, int hour, int minute, int second);
     long pack(int year, int month, int day, int hour, int minute, int second, int milli);
+    long pack(int packedDate, Packing datePacking, int packedTime, TimePacker timePacker);
+    long pack(int packedDate, Packing datePacking, int packedMilliTime, MilliTimePacker milliTimePacker);
     int unpackYear(long packed);
     int unpackMonth(long packed);
     int unpackDay(long packed);
@@ -125,6 +126,27 @@ public interface DateTimePacker {
         }
 
         @Override
+        default long pack(final int packedDate, final Packing datePacking,
+                          final int packedTime, final TimePacker timePacker) {
+            final DatePacker datePacker = DatePacker.valueOf(datePacking, validationMethod());
+            return pack(
+                    datePacker.unpackYear(packedDate), datePacker.unpackMonth(packedDate), datePacker.unpackDay(packedDate),
+                    timePacker.unpackHour(packedTime), timePacker.unpackMinute(packedTime), timePacker.unpackSecond(packedTime)
+            );
+        }
+
+        @Override
+        default long pack(final int packedDate, final Packing datePacking,
+                          final int packedMilliTime, final MilliTimePacker milliTimePacker) {
+            final DatePacker datePacker = DatePacker.valueOf(datePacking, validationMethod());
+            return pack(
+                    datePacker.unpackYear(packedDate), datePacker.unpackMonth(packedDate), datePacker.unpackDay(packedDate),
+                    milliTimePacker.unpackHour(packedMilliTime), milliTimePacker.unpackMinute(packedMilliTime),
+                    milliTimePacker.unpackSecond(packedMilliTime), milliTimePacker.unpackMilli(packedMilliTime)
+            );
+        }
+
+        @Override
         default long pack(final LocalDateTime localDateTime) {
             return localDateTime == null ? packNull() :
                     pack(localDateTime.getYear(), localDateTime.getMonthValue(), localDateTime.getDayOfMonth(),
@@ -162,7 +184,6 @@ public interface DateTimePacker {
         }
 
         @Override
-        @Garbage(Garbage.Type.RESULT)
         default DateTimePacker forValidationMethod(final ValidationMethod validationMethod) {
             return valueOf(packing(), validationMethod);
         }

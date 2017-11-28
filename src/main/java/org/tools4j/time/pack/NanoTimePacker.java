@@ -55,7 +55,6 @@ public interface NanoTimePacker {
     long NULL = Long.MAX_VALUE;
     Packing packing();
     ValidationMethod validationMethod();
-    @Garbage(Garbage.Type.RESULT)
     NanoTimePacker forValidationMethod(ValidationMethod validationMethod);
     long pack(int hour, int minute, int second, int nano);
     int unpackHour(long packed);
@@ -145,7 +144,6 @@ public interface NanoTimePacker {
         }
 
         @Override
-        @Garbage(Garbage.Type.RESULT)
         default NanoTimePacker forValidationMethod(final ValidationMethod validationMethod) {
             return valueOf(packing(), validationMethod);
         }

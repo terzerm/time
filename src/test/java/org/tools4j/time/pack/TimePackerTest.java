@@ -117,6 +117,18 @@ public class TimePackerTest {
         }
 
         @Test
+        public void packFromPackedDateTime(final LocalTime localTime) throws Exception {
+            for (final TimePacker packer : PACKERS) {
+                Packing.forEach(packing -> {
+                    final long packedDateTime = DateTimePacker.valueOf(packing).pack(localTime.atDate(LocalDate.now()));
+                    final int packedTime = packer.pack(packedDateTime, packing);
+                    final LocalTime unpacked = packer.unpackLocalTime(packedTime);
+                    assertEquals(packer + "|" + packing + ": " + localTime + " -> " + packedTime, localTime, unpacked);
+                });
+            }
+        }
+
+        @Test
         public void packEpochMilli(final LocalTime localTime) throws Exception {
             for (final LocalDate date : DATES) {
                 for (final TimePacker packer : PACKERS) {

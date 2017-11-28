@@ -169,6 +169,34 @@ public class DateTimePackerTest {
         }
 
         @Test
+        public void packFromPackedDateAndTime(final LocalDate localDate, final LocalTime localTime) throws Exception {
+            for (final DateTimePacker packer : PACKERS) {
+                Packing.forEach(packing -> {
+                    final int packedDate = DatePacker.valueOf(packing).pack(localDate);
+                    final int packedTime = TimePacker.valueOf(packing).pack(localTime);
+                    final long packedDateTime = packer.pack(packedDate, packing, packedTime, TimePacker.valueOf(packing));
+                    final LocalDateTime unpacked = packer.unpackLocalDateTime(packedDateTime);
+                    assertEquals(packer + "|" + packing  + ": " + localDate + " " + localTime + " -> " + packedDateTime, localDate, unpacked.toLocalDate());
+                    assertEquals(packer + "|" + packing  + ": " + localDate + " " + localTime + " -> " + unpacked.toLocalTime(), localTime.withNano(0), unpacked.toLocalTime());
+                });
+            }
+        }
+
+        @Test
+        public void packFromPackedDateAndMilliTime(final LocalDate localDate, final LocalTime localTime) throws Exception {
+            for (final DateTimePacker packer : PACKERS) {
+                Packing.forEach(packing -> {
+                    final int packedDate = DatePacker.valueOf(packing).pack(localDate);
+                    final int packedTime = MilliTimePacker.valueOf(packing).pack(localTime);
+                    final long packedDateTime = packer.pack(packedDate, packing, packedTime, MilliTimePacker.valueOf(packing));
+                    final LocalDateTime unpacked = packer.unpackLocalDateTime(packedDateTime);
+                    assertEquals(packer + "|" + packing  + ": " + localDate + " " + localTime + " -> " + packedDateTime, localDate, unpacked.toLocalDate());
+                    assertEquals(packer + "|" + packing  + ": " + localDate + " " + localTime + " -> " + unpacked.toLocalTime(), localTime, unpacked.toLocalTime());
+                });
+            }
+        }
+
+        @Test
         public void packEpochMilli(final LocalDate localDate, final LocalTime localTime) throws Exception {
             final long epochMilli = localDate.atTime(localTime).toInstant(ZoneOffset.UTC).toEpochMilli();
             for (final DateTimePacker packer : PACKERS) {

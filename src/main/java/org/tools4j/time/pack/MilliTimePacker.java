@@ -55,9 +55,9 @@ public interface MilliTimePacker {
     int NULL = Integer.MAX_VALUE;
     Packing packing();
     ValidationMethod validationMethod();
-    @Garbage(Garbage.Type.RESULT)
     MilliTimePacker forValidationMethod(ValidationMethod validationMethod);
     int pack(int hour, int minute, int second, int milli);
+    int pack(long packedDateTime, Packing packing);
     int unpackHour(int packed);
     int unpackMinute(int packed);
     int unpackSecond(int packed);
@@ -111,6 +111,13 @@ public interface MilliTimePacker {
         }
 
         @Override
+        default int pack(final long packedDateTime, final Packing packing) {
+            final DateTimePacker unpacker = DateTimePacker.valueOf(packing, validationMethod());
+            return pack(unpacker.unpackHour(packedDateTime), unpacker.unpackMinute(packedDateTime),
+                    unpacker.unpackSecond(packedDateTime), unpacker.unpackMilli(packedDateTime));
+        }
+
+        @Override
         @Garbage(Garbage.Type.RESULT)
         default LocalTime unpackLocalTime(final int packed) {
             return unpackNull(packed) ? null :
@@ -132,7 +139,6 @@ public interface MilliTimePacker {
         }
 
         @Override
-        @Garbage(Garbage.Type.RESULT)
         default MilliTimePacker forValidationMethod(final ValidationMethod validationMethod) {
             return valueOf(packing(), validationMethod);
         }

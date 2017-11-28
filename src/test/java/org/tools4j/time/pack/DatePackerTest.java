@@ -144,6 +144,18 @@ public class DatePackerTest {
         }
 
         @Test
+        public void packFromPackedDateTime(final LocalDate localDate) throws Exception {
+            for (final DatePacker packer : PACKERS) {
+                Packing.forEach(packing -> {
+                    final long packedDateTime = DateTimePacker.valueOf(packing).pack(localDate.atStartOfDay());
+                    final int packedDate = packer.pack(packedDateTime, packing);
+                    final LocalDate unpacked = packer.unpackLocalDate(packedDate);
+                    assertEquals(packer + "|" + packing + ": " + localDate + " -> " + packedDate, localDate, unpacked);
+                });
+            }
+        }
+
+        @Test
         public void unpackEpochMilli(final LocalDate localDate) throws Exception {
             for (final DatePacker packer : PACKERS) {
                 final long epochMilli = packer.unpackEpochMilli(packer.pack(localDate));

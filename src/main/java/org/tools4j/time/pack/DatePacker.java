@@ -53,9 +53,9 @@ public interface DatePacker {
     int NULL = 0;
     Packing packing();
     ValidationMethod validationMethod();
-    @Garbage(Garbage.Type.RESULT)
     DatePacker forValidationMethod(ValidationMethod validationMethod);
     int pack(int year, int month, int day);
+    int pack(long packedDateTime, Packing packing);
     int unpackYear(int packed);
     int unpackMonth(int packed);
     int unpackDay(int packed);
@@ -68,6 +68,7 @@ public interface DatePacker {
     long unpackEpochDay(int packed);
     int packEpochMilli(long millisSinceEpoch);
     long unpackEpochMilli(int packed);
+
 
     /**
      * Returns a date packer that performs no validation.
@@ -110,6 +111,16 @@ public interface DatePacker {
         }
 
         @Override
+        default int pack(final long packedDateTime, final Packing packing) {
+            final DateTimePacker unpacker = DateTimePacker.valueOf(packing, validationMethod());
+            return pack(
+                    unpacker.unpackYear(packedDateTime),
+                    unpacker.unpackMonth(packedDateTime),
+                    unpacker.unpackDay(packedDateTime)
+            );
+        }
+
+        @Override
         @Garbage(Garbage.Type.RESULT)
         default LocalDate unpackLocalDate(final int packed) {
             return unpackNull(packed) ? null : LocalDate.of(
@@ -138,7 +149,6 @@ public interface DatePacker {
         }
 
         @Override
-        @Garbage(Garbage.Type.RESULT)
         default DatePacker forValidationMethod(final ValidationMethod validationMethod) {
             return valueOf(packing(), validationMethod);
         }
