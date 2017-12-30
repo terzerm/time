@@ -500,6 +500,28 @@ public class DateParserTest {
                 }
             }
         }
+
+        @Test
+        public void to_String() throws Exception {
+            String expected;
+            for (final DateFormat format : DateFormat.values()) {
+                expected = "SimpleDateParser[format=" + format + ", separator=" + separatorString(format) + "]";
+                assertEquals(expected, DateParser.valueOf(format).toString());
+                for (final char separator : SEPARATORS) {
+                    expected = "SimpleDateParser[format=" + format + ", separator=" + separatorString(format, separator) + "]";
+                    assertEquals(expected, DateParser.valueOf(format, separator).toString());
+                    for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                        final String master = validationMethod == ValidationMethod.UNVALIDATED ? "" +
+                                "SimpleDateParser[format=%s, separator=%s]" :
+                                "ValidatingDateParser[format=%s, separator=%s, validationMethod=%s]";
+                        expected = String.format(master, format, separatorString(format), validationMethod);
+                        assertEquals(expected, DateParser.valueOf(format, validationMethod).toString());
+                        expected = String.format(master, format, separatorString(format, separator), validationMethod);
+                        assertEquals(expected, DateParser.valueOf(format, separator, validationMethod).toString());
+                    }
+                }
+            }
+        }
     }
 
     private static Map<DateFormat, String> patternByFormat() {
@@ -524,5 +546,14 @@ public class DateParserTest {
             }
         }
         return parsers;
+    }
+
+    static String separatorString(final DateFormat format) {
+        return separatorString(format, DateFormatter.DEFAULT_SEPARATOR);
+    }
+
+    static String separatorString(final DateFormat format, final char separator) {
+        return format.hasSeparators() && separator != DateFormatter.NO_SEPARATOR ?
+                "'" + separator + "'" : "<none>";
     }
 }

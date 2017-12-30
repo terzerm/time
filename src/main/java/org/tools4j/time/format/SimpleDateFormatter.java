@@ -61,11 +61,9 @@ final class SimpleDateFormatter implements DateFormatter.Default {
             return INVALID;
         }
         final DateFormat format = format();
-        final int offsetY = format.offsetYear();
-        final int offsetM = format.offsetMonth();
-        final int offsetD = format.offsetDay();
-        final int offSep1 = format.offsetSeparatorOne();
-        final int offSep2 = format.offsetSeparatorTwo();
+        final int offsetY = offset + format.offsetYear();
+        final int offsetM = offset + format.offsetMonth();
+        final int offsetD = offset + format.offsetDay();
         writer.writeChar(target, offsetY + 0, Ascii.digit((year / 1000) % 10));
         writer.writeChar(target, offsetY + 1, Ascii.digit((year / 100) % 10));
         writer.writeChar(target, offsetY + 2, Ascii.digit((year / 10) % 10));
@@ -74,11 +72,13 @@ final class SimpleDateFormatter implements DateFormatter.Default {
         writer.writeChar(target, offsetM + 1, Ascii.digit(month % 10));
         writer.writeChar(target, offsetD + 0, Ascii.digit((day / 10) % 10));
         writer.writeChar(target, offsetD + 1, Ascii.digit(day % 10));
+        final int offSep1 = format.offsetSeparatorOne();
+        final int offSep2 = format.offsetSeparatorTwo();
         if (offSep1 >= 0) {
-            writer.writeChar(target, offSep1, separator);
+            writer.writeChar(target, offset + offSep1, separator);
         }
         if (offSep2 >= 0) {
-            writer.writeChar(target, offSep2, separator);
+            writer.writeChar(target, offset + offSep2, separator);
         }
         return format.length();
     }

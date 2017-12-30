@@ -130,6 +130,7 @@ public class ThrottlerTest {
         final long startTimeMillis = System.currentTimeMillis();
         long lastCount = 0;
         long lastTimeMillis = startTimeMillis;
+        double maxError = 0f;
         for (int i = 0; i < Integer.MAX_VALUE; i++) {
             runnable.run();
             if ((i & 0xff) == 0) {
@@ -142,10 +143,21 @@ public class ThrottlerTest {
                     lastTimeMillis = timeMillis;
                     System.out.println(time + ": counter=" + counter + ", incrementLastSliceCount=" + deltaCount);
                     final double updatesPerDeltaTime = updatesPerSecond * deltaMillis / 1000;
-                    assertTrue(time + ": " + deltaCount + " should be within 1% of " + updatesPerDeltaTime,
-                            Math.abs(updatesPerDeltaTime - deltaCount) <= (1 + updatesPerDeltaTime/100));
+                    final double error;
+                    if (updatesPerDeltaTime < 100) {
+                        final double expectedCount = 1 + Math.floor((timeMillis - startTimeMillis) / 1000 * updatesPerSecond);
+                        error = Math.abs((expectedCount - counter.get()) / expectedCount);
+                        assertTrue(time + ": " + deltaCount + " should be at most 1",
+                                Math.abs(updatesPerDeltaTime - deltaCount) <= 1);
+                    } else {
+                        error = Math.abs((updatesPerDeltaTime - deltaCount) / updatesPerDeltaTime);
+                        assertTrue(time + ": " + deltaCount + " should be within 1% of " + updatesPerDeltaTime,
+                                error <= 0.01);
+                    }
+                    maxError = Math.max(maxError, error);
                 }
                 if (timeMillis - startTimeMillis >= runningTimeMillis) {
+                    System.out.println("Max slice error: " + (float)(100 * maxError) + "%");
                     return;
                 }
             }
