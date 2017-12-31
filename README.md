@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/tools4j/time.svg?branch=master)](https://travis-ci.org/tools4j/time)
+[![Coverage Status](https://coveralls.io/repos/github/tools4j/time/badge.svg?branch=master)](https://coveralls.io/github/tools4j/time?branch=master)
 <!-- [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tools4j/tools4j-time/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tools4j/tools4j-time) -->
-
 
 # tools4j-time
 Java library dealing with date and time values without creating objects to be suitable for zero garbage applications.
