@@ -23,13 +23,17 @@
  */
 package org.tools4j.time.format;
 
+import org.tools4j.time.base.Epoch;
 import org.tools4j.time.base.Garbage;
-import org.tools4j.time.base.TimeFactors;
+import org.tools4j.time.pack.DatePacker;
 import org.tools4j.time.pack.Packing;
 import org.tools4j.time.validate.DateValidator;
 import org.tools4j.time.validate.ValidationMethod;
+import org.tools4j.time.zone.Zone;
 
 import java.time.LocalDate;
+
+import static org.tools4j.time.base.TimeFactors.*;
 
 public interface DateParser {
     int INVALID = DateValidator.INVALID;
@@ -62,10 +66,22 @@ public interface DateParser {
     long parseAsEpochDay(CharSequence charSequence, int offset);
     <S> long parseAsEpochDay(S source, AsciiReader<? super S> reader);
     <S> long parseAsEpochDay(S source, AsciiReader<? super S> reader, int offset);
+    long parseAsEpochSecond(CharSequence charSequence);
+    long parseAsEpochSecond(CharSequence charSequence, int offset);
+    <S> long parseAsEpochSecond(S source, AsciiReader<? super S> reader);
+    <S> long parseAsEpochSecond(S source, AsciiReader<? super S> reader, int offset);
+    long parseAsEpochSecond(CharSequence charSequence, Zone zone);
+    long parseAsEpochSecond(CharSequence charSequence, int offset, Zone zone);
+    <S> long parseAsEpochSecond(S source, AsciiReader<? super S> reader, Zone zone);
+    <S> long parseAsEpochSecond(S source, AsciiReader<? super S> reader, int offset, Zone zone);
     long parseAsEpochMilli(CharSequence charSequence);
     long parseAsEpochMilli(CharSequence charSequence, int offset);
     <S> long parseAsEpochMilli(S source, AsciiReader<? super S> reader);
     <S> long parseAsEpochMilli(S source, AsciiReader<? super S> reader, int offset);
+    long parseAsEpochMilli(CharSequence charSequence, Zone zone);
+    long parseAsEpochMilli(CharSequence charSequence, int offset, Zone zone);
+    <S> long parseAsEpochMilli(S source, AsciiReader<? super S> reader, Zone zone);
+    <S> long parseAsEpochMilli(S source, AsciiReader<? super S> reader, int offset, Zone zone);
     @Garbage(Garbage.Type.RESULT)
     LocalDate parseAsLocalDate(CharSequence charSequence);
     @Garbage(Garbage.Type.RESULT)
@@ -193,6 +209,50 @@ public interface DateParser {
         default <S> long parseAsEpochDay(final S source, final AsciiReader<? super S> reader) {
             return parseAsEpochDay(source, reader, 0);
         }
+
+        @Override
+        default long parseAsEpochSecond(final CharSequence charSequence) {
+            return parseAsEpochSecond(charSequence, AsciiReader.CHAR_SEQUENCE);
+        }
+        @Override
+        default long parseAsEpochSecond(final CharSequence charSequence, final int offset) {
+            return parseAsEpochSecond(charSequence, AsciiReader.CHAR_SEQUENCE, offset);
+        }
+        @Override
+        default <S> long parseAsEpochSecond(final S source, final AsciiReader<? super S> reader) {
+            return parseAsEpochSecond(source, reader, 0);
+        }
+        @Override
+        default <S> long parseAsEpochSecond(final S source, final AsciiReader<? super S> reader, final int offset) {
+            final long epochDay = parseAsEpochDay(source, reader, offset);
+            return epochDay != INVALID_EPOCH ? epochDay * SECONDS_PER_DAY : INVALID_EPOCH;
+        }
+
+        @Override
+        default long parseAsEpochSecond(final CharSequence charSequence, final Zone zone) {
+            return parseAsEpochSecond(charSequence, AsciiReader.CHAR_SEQUENCE, zone);
+        }
+        @Override
+        default long parseAsEpochSecond(final CharSequence charSequence, final int offset, final Zone zone) {
+            return parseAsEpochSecond(charSequence, AsciiReader.CHAR_SEQUENCE, offset, zone);
+        }
+        @Override
+        default <S> long parseAsEpochSecond(final S source, final AsciiReader<? super S> reader, final Zone zone) {
+            return parseAsEpochSecond(source, reader, 0, zone);
+        }
+        @Override
+        default <S> long parseAsEpochSecond(final S source, final AsciiReader<? super S> reader, final int offset, final Zone zone) {
+            final int packed = parseAsPackedDate(source, reader, offset, Packing.BINARY);
+            if (packed != INVALID) {
+                final int year = DatePacker.BINARY.unpackYear(packed);
+                final int month = DatePacker.BINARY.unpackMonth(packed);
+                final int day = DatePacker.BINARY.unpackDay(packed);
+                final int offsetSeconds = zone.offsetSeconds(year, month, day, 0, 0, 0, 0);
+                return Epoch.valueOf(ValidationMethod.UNVALIDATED).toEpochSecond(year, month, day) - offsetSeconds;
+            }
+            return INVALID_EPOCH;
+        }
+
         @Override
         default long parseAsEpochMilli(final CharSequence charSequence) {
             return parseAsEpochMilli(charSequence, AsciiReader.CHAR_SEQUENCE);
@@ -208,10 +268,24 @@ public interface DateParser {
         @Override
         default <S> long parseAsEpochMilli(final S source, final AsciiReader<? super S> reader, final int offset) {
             final long epochDay = parseAsEpochDay(source, reader, offset);
-            if (epochDay != INVALID_EPOCH) {
-                return parseAsEpochDay(source, reader, offset) * TimeFactors.MILLIS_PER_DAY;
-            }
-            return INVALID_EPOCH;
+            return epochDay != INVALID_EPOCH ? epochDay * MILLIS_PER_DAY : INVALID_EPOCH;
+        }
+        @Override
+        default long parseAsEpochMilli(final CharSequence charSequence, final Zone zone) {
+            return parseAsEpochMilli(charSequence, AsciiReader.CHAR_SEQUENCE, zone);
+        }
+        @Override
+        default long parseAsEpochMilli(final CharSequence charSequence, final int offset, final Zone zone) {
+            return parseAsEpochMilli(charSequence, AsciiReader.CHAR_SEQUENCE, offset, zone);
+        }
+        @Override
+        default <S> long parseAsEpochMilli(final S source, final AsciiReader<? super S> reader, final Zone zone) {
+            return parseAsEpochMilli(source, reader, 0, zone);
+        }
+        @Override
+        default <S> long parseAsEpochMilli(final S source, final AsciiReader<? super S> reader, final int offset, final Zone zone) {
+            final long epochSecond = parseAsEpochSecond(source, reader, offset, zone);
+            return epochSecond != INVALID_EPOCH ? epochSecond * MILLIS_PER_SECOND : INVALID_EPOCH;
         }
         @Override
         default LocalDate parseAsLocalDate(final CharSequence charSequence) {

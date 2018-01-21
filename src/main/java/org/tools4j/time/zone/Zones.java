@@ -23,16 +23,13 @@
  */
 package org.tools4j.time.zone;
 
-import org.tools4j.time.base.TimeFactors;
-
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
-import static org.tools4j.time.base.TimeFactors.NANOS_PER_HOUR;
-import static org.tools4j.time.base.TimeFactors.NANOS_PER_SECOND;
-import static org.tools4j.time.base.TimeFactors.SECONDS_PER_HOUR;
+import static org.tools4j.time.base.TimeFactors.*;
 
 /**
  * Provides methods dealing with {@link ZoneId} and its subtypes {@link ZoneOffset} and {@code ZoneRegion}.
@@ -64,14 +61,21 @@ public final class Zones {
         final ZonedDateTime dlEnd18 = ZonedDateTime.of(2018, 4, 1, 3, 0, 0, 0, zone.zoneId());
         final ZonedDateTime dlStar18 = ZonedDateTime.of(2018, 10, 7, 2, 0, 0, 0, zone.zoneId());
 
+        final DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.nnnnnnnnn");
+        final DateTimeFormatter formatx = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.nnnnnnnnnx");
         final long[] nanoOffsets = {-2*NANOS_PER_HOUR-1, -2*NANOS_PER_HOUR, -1*NANOS_PER_HOUR-1, -1*NANOS_PER_HOUR, -1, 0, 1, NANOS_PER_SECOND};
         for (ZonedDateTime zdt : new ZonedDateTime[]{dlEnd16, dlStar16, dlEnd17, dlStar17, dlEnd18, dlStar18}) {
             for (long nanosOff : nanoOffsets) {
                 final LocalDateTime ldt = zdt.toLocalDateTime().plusNanos(nanosOff);
-                System.out.println(ldt + ":\t+" + zone.offsetSeconds(
+                final int offsetSeconds = zone.offsetSeconds(
                         ldt.getYear(), ldt.getMonthValue(), ldt.getDayOfMonth(),
-                        ldt.getHour(), ldt.getMinute(), ldt.getSecond(), ldt.getNano()
-                ) / SECONDS_PER_HOUR);
+                        ldt.getHour(), ldt.getMinute(), ldt.getSecond(), ldt.getNano());
+                System.out.println(
+                        ldt.format(format) +
+                        " +" + offsetSeconds / SECONDS_PER_HOUR +
+                        "\t" + ldt.atZone(zone.zoneId()).format(formatx) +
+                        "\t" + ldt.minusSeconds(offsetSeconds).format(format) +
+                        "\t" + ldt.atZone(zone.zoneId()).toInstant());
             }
             System.out.println();
         }
