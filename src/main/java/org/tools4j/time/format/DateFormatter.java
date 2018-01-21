@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2017 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2018 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,10 +29,11 @@ import org.tools4j.time.pack.DatePacker;
 import org.tools4j.time.pack.Packing;
 import org.tools4j.time.validate.DateValidator;
 import org.tools4j.time.validate.ValidationMethod;
+import org.tools4j.time.zone.Zone;
 
 import java.time.LocalDate;
 
-import static org.tools4j.time.base.TimeFactors.MILLIS_PER_DAY;
+import static org.tools4j.time.base.TimeFactors.*;
 
 public interface DateFormatter {
     int INVALID = DateValidator.INVALID;
@@ -48,12 +49,22 @@ public interface DateFormatter {
     int formatPackedDate(int packedDate, Packing packing, Appendable appendable);
     <T> int formatPackedDate(int packedDate, Packing packing, T target, AsciiWriter<? super T> writer);
     <T> int formatPackedDate(int packedDate, Packing packing, T target, AsciiWriter<? super T> writer, int offset);
+
     int formatEpochDay(long daysSinceEpoch, Appendable appendable);
     <T> int formatEpochDay(long daysSinceEpoch, T target, AsciiWriter<? super T> writer);
     <T> int formatEpochDay(long daysSinceEpoch, T target, AsciiWriter<? super T> writer, int offset);
+    int formatEpochSecond(long secondsSinceEpoch, Appendable appendable);
+    <T> int formatEpochSecond(long secondsSinceEpoch, T target, AsciiWriter<? super T> writer);
+    <T> int formatEpochSecond(long secondsSinceEpoch, T target, AsciiWriter<? super T> writer, int offset);
+    int formatEpochSecond(long secondsSinceEpoch, Zone zone, Appendable appendable);
+    <T> int formatEpochSecond(long secondsSinceEpoch, Zone zone, T target, AsciiWriter<? super T> writer);
+    <T> int formatEpochSecond(long secondsSinceEpoch, Zone zone, T target, AsciiWriter<? super T> writer, int offset);
     int formatEpochMilli(long millisSinceEpoch, Appendable appendable);
     <T> int formatEpochMilli(long millisSinceEpoch, T target, AsciiWriter<? super T> writer);
     <T> int formatEpochMilli(long millisSinceEpoch, T target, AsciiWriter<? super T> writer, int offset);
+    int formatEpochMilli(long millisSinceEpoch, Zone zone, Appendable appendable);
+    <T> int formatEpochMilli(long millisSinceEpoch, Zone zone, T target, AsciiWriter<? super T> writer);
+    <T> int formatEpochMilli(long millisSinceEpoch, Zone zone, T target, AsciiWriter<? super T> writer, int offset);
     int formatLocalDate(LocalDate localDate, Appendable appendable);
     <T> int formatLocalDate(LocalDate localDate, T target, AsciiWriter<? super T> writer);
     <T> int formatLocalDate(LocalDate localDate, T target, AsciiWriter<? super T> writer, int offset);
@@ -144,6 +155,40 @@ public interface DateFormatter {
         }
 
         @Override
+        default int formatEpochSecond(final long secondsSinceEpoch, final Appendable appendable) {
+            return formatEpochDay(Math.floorDiv(secondsSinceEpoch, SECONDS_PER_DAY), appendable);
+        }
+
+        @Override
+        default <T> int formatEpochSecond(final long secondsSinceEpoch,
+                                          final T target, final AsciiWriter<? super T> writer) {
+            return formatEpochSecond(secondsSinceEpoch, target, writer, 0);
+        }
+
+        @Override
+        default <T> int formatEpochSecond(final long secondsSinceEpoch,
+                                          final T target, final AsciiWriter<? super T> writer, final int offset) {
+            return formatEpochDay(Math.floorDiv(secondsSinceEpoch, SECONDS_PER_DAY), target, writer, offset);
+        }
+
+        @Override
+        default int formatEpochSecond(final long secondsSinceEpoch, final Zone zone, final Appendable appendable) {
+            return formatEpochSecond(secondsSinceEpoch + zone.offsetSeconds(secondsSinceEpoch), appendable);
+        }
+
+        @Override
+        default <T> int formatEpochSecond(final long secondsSinceEpoch, final Zone zone,
+                                          final T target, final AsciiWriter<? super T> writer) {
+            return formatEpochSecond(secondsSinceEpoch, zone, target, writer, 0);
+        }
+
+        @Override
+        default <T> int formatEpochSecond(final long secondsSinceEpoch, final Zone zone,
+                                          final T target, final AsciiWriter<? super T> writer, final int offset) {
+            return formatEpochSecond(secondsSinceEpoch + zone.offsetSeconds(secondsSinceEpoch), target, writer, offset);
+        }
+
+        @Override
         default int formatEpochMilli(final long millisSinceEpoch, final Appendable appendable) {
             return formatEpochDay(Math.floorDiv(millisSinceEpoch, MILLIS_PER_DAY), appendable);
         }
@@ -158,6 +203,23 @@ public interface DateFormatter {
         default <T> int formatEpochMilli(final long millisSinceEpoch,
                                          final T target, final AsciiWriter<? super T> writer, final int offset) {
             return formatEpochDay(Math.floorDiv(millisSinceEpoch, MILLIS_PER_DAY), target, writer, offset);
+        }
+
+        @Override
+        default int formatEpochMilli(final long millisSinceEpoch, final Zone zone, final Appendable appendable) {
+            return formatEpochSecond(Math.floorDiv(millisSinceEpoch, MILLIS_PER_SECOND), zone, appendable);
+        }
+
+        @Override
+        default <T> int formatEpochMilli(final long millisSinceEpoch, final Zone zone,
+                                         final T target, final AsciiWriter<? super T> writer) {
+            return formatEpochMilli(millisSinceEpoch, zone, target, writer, 0);
+        }
+
+        @Override
+        default <T> int formatEpochMilli(final long millisSinceEpoch, final Zone zone,
+                                         final T target, final AsciiWriter<? super T> writer, final int offset) {
+            return formatEpochSecond(Math.floorDiv(millisSinceEpoch, MILLIS_PER_SECOND), zone, target, writer, offset);
         }
 
         @Override

@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2017 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2018 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -115,6 +115,9 @@ final class EpochImpl implements Epoch.Default {
 
         // check year now we are certain it is correct
         final int year = validationMethod().dateValidator().validateYear(yearEst);
+        if (year == DateValidator.INVALID & validationMethod() == ValidationMethod.INVALIDATE_RESULT) {
+            return DatePacker.INVALID;
+        }
         return datePacker.pack(year, month, day);
     }
 

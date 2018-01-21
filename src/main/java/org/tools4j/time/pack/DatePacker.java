@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2017 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2018 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -51,6 +51,7 @@ import java.util.Objects;
 public interface DatePacker {
     int INVALID = -1;
     int NULL = 0;
+
     Packing packing();
     ValidationMethod validationMethod();
     DatePacker forValidationMethod(ValidationMethod validationMethod);
@@ -68,7 +69,6 @@ public interface DatePacker {
     long unpackEpochDay(int packed);
     int packEpochMilli(long millisSinceEpoch);
     long unpackEpochMilli(int packed);
-
 
     /**
      * Returns a date packer that performs no validation.
