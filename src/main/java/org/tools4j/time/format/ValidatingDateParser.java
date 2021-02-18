@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2018 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -80,7 +80,7 @@ final class ValidatingDateParser implements DateParser.Default {
             }
             return invalid(validationMethod, format, year, "Invalid year in date string: ", source, reader, offset);
         }
-        return invalid(validationMethod, format, INVALID, "Illegal year Ascii.digit in date string: ", source, reader, offset);
+        return invalid(validationMethod, format, INVALID, "Illegal year digit in date string: ", source, reader, offset);
     }
 
     @Override
@@ -98,7 +98,7 @@ final class ValidatingDateParser implements DateParser.Default {
         if (Ascii.isDigit(ch1) & Ascii.isDigit(ch2)) {
             return invalid(validationMethod, format, INVALID, "Invalid month in date string: ", source, reader, offset);
         }
-        return invalid(validationMethod, format, INVALID, "Illegal month Ascii.digit in date string: ", source, reader, offset);
+        return invalid(validationMethod, format, INVALID, "Illegal month digit in date string: ", source, reader, offset);
     }
 
     @Override
@@ -119,7 +119,7 @@ final class ValidatingDateParser implements DateParser.Default {
             }
             return invalid(validationMethod, format, INVALID, "Invalid day in date string: ", source, reader, offset);
         }
-        return invalid(validationMethod, format, INVALID, "Illegal day Ascii.digit in date string: ", source, reader, offset);
+        return invalid(validationMethod, format, INVALID, "Illegal day digit in date string: ", source, reader, offset);
     }
 
     @Override

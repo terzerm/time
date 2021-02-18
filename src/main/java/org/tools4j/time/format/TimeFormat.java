@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2018 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 /**
  * Constants for common time formats of fixed length. The format defines the ordering
  * of the time components and the position of the separator characters (if any), but not
- * the type of separator charactor.
+ * the type of separator character.
  */
 public enum TimeFormat {
     /** Time format without separator chars such as 1315 for a quarter past 1pm */
@@ -168,7 +168,7 @@ public enum TimeFormat {
     private static TimeFormat[] VALUES = values();
 
     /** @return the number of time formats available */
-    public static final int count() {
+    public static int count() {
         return VALUES.length;
     }
 
@@ -178,7 +178,7 @@ public enum TimeFormat {
      * @throws ArrayIndexOutOfBoundsException if ordinal is out of bounds
      * @see #count()
      */
-    public static final TimeFormat valueByOrdinal(final int ordinal) {
+    public static TimeFormat valueByOrdinal(final int ordinal) {
         return VALUES[ordinal];
     }
 
@@ -186,7 +186,7 @@ public enum TimeFormat {
      * Invokes the specified consumer for each of the constants.
      * @param consumer the consumer to invoke for every constant
      */
-    public static final void forEach(final Consumer<? super TimeFormat> consumer) {
+    public static void forEach(final Consumer<? super TimeFormat> consumer) {
         for (final TimeFormat packing : VALUES) {
             consumer.accept(packing);
         }

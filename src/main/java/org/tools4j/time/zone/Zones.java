@@ -1,7 +1,7 @@
-/**
+/*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2018 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,13 +23,18 @@
  */
 package org.tools4j.time.zone;
 
+import org.tools4j.time.format.DateFormat;
+import org.tools4j.time.format.DateFormatter;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-import static org.tools4j.time.base.TimeFactors.*;
+import static org.tools4j.time.base.TimeFactors.NANOS_PER_HOUR;
+import static org.tools4j.time.base.TimeFactors.NANOS_PER_SECOND;
+import static org.tools4j.time.base.TimeFactors.SECONDS_PER_HOUR;
 
 /**
  * Provides methods dealing with {@link ZoneId} and its subtypes {@link ZoneOffset} and {@code ZoneRegion}.
@@ -43,13 +48,35 @@ public final class Zones {
     }
 
     public static void main(String... args) {
-//        DateFormatter dateFormatter = DateFormatter.valueOf(DateFormat.DD_MM_YYYY);
-//        dateFormatter.formatEpochMilli(System.currentTimeMillis(), System.out);System.out.println();
-//        dateFormatter.formatEpochMilli(System.currentTimeMillis(), Zone.utc(), System.out);System.out.println();
-//        dateFormatter.formatEpochMilli(System.currentTimeMillis(), Zone.systemDefault(), System.out);System.out.println();
-//        dateFormatter.formatEpochMilli(System.currentTimeMillis(), Zone.newYork(), System.out);System.out.println();
+        final ZoneId zoneIdAU = ZoneId.of("Australia/Melbourne");
+        final Zone zoneAU = Zone.forZoneId(zoneIdAU.getId());
+        //Current date, different Time zones
+        System.out.println("Today");
+        final DateFormatter dateFormatter = DateFormatter.valueOf(DateFormat.DD_MM_YYYY);
+        dateFormatter.formatEpochMilli(System.currentTimeMillis(), System.out);System.out.println();
+        dateFormatter.formatEpochMilli(System.currentTimeMillis(), Zone.utc(), System.out);System.out.println();
+        dateFormatter.formatEpochMilli(System.currentTimeMillis(), Zone.systemDefault(), System.out);System.out.println();
+        dateFormatter.formatEpochMilli(System.currentTimeMillis(), zoneAU, System.out);System.out.println();
+        dateFormatter.formatEpochMilli(System.currentTimeMillis(), Zone.newYork(), System.out);System.out.println();
 
-//        //AU Daylight
+        //midnight in AU
+        final long millisSinceEpochOneSecondBeforeMidnightAU = ZonedDateTime.of(2018, 3, 31, 23, 59, 59, 0, zoneIdAU).toEpochSecond();
+        System.out.println("1 second before midnight in AU");
+        dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU, System.out);System.out.println();
+        dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU, Zone.utc(), System.out);System.out.println();
+        dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU, Zone.systemDefault(), System.out);System.out.println();
+        dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU, zoneAU, System.out);System.out.println();
+        dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU, Zone.newYork(), System.out);System.out.println();
+        System.out.println("1 second after midnight in AU");
+        dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU+2, System.out);System.out.println();
+        dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU+2, Zone.utc(), System.out);System.out.println();
+        dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU+2, Zone.systemDefault(), System.out);System.out.println();
+        dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU+2, zoneAU, System.out);System.out.println();
+        dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU+2, Zone.newYork(), System.out);System.out.println();
+
+        //midnight in NY
+
+        //        //AU Daylight
         final Zone zone = Zone.systemDefault();
 //        2016	Sunday, April 3, 3:00 am	Sunday, October 2, 2:00 am
 //        2017	Sunday, April 2, 3:00 am	Sunday, October 1, 2:00 am
@@ -63,7 +90,7 @@ public final class Zones {
 
         final DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.nnnnnnnnn");
         final DateTimeFormatter formatx = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.nnnnnnnnnx");
-        final long[] nanoOffsets = {-2*NANOS_PER_HOUR-1, -2*NANOS_PER_HOUR, -1*NANOS_PER_HOUR-1, -1*NANOS_PER_HOUR, -1, 0, 1, NANOS_PER_SECOND};
+        final long[] nanoOffsets = {-2*NANOS_PER_HOUR-1, -2*NANOS_PER_HOUR, -2*NANOS_PER_HOUR+1, -1*NANOS_PER_HOUR-1, -1*NANOS_PER_HOUR, -1*NANOS_PER_HOUR+1, -NANOS_PER_SECOND,  -1, 0, 1, NANOS_PER_SECOND};
         for (ZonedDateTime zdt : new ZonedDateTime[]{dlEnd16, dlStar16, dlEnd17, dlStar17, dlEnd18, dlStar18}) {
             for (long nanosOff : nanoOffsets) {
                 final LocalDateTime ldt = zdt.toLocalDateTime().plusNanos(nanosOff);

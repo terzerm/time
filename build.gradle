@@ -120,7 +120,7 @@ if (project.hasProperty('upload')) {
                         name 'time'
                         packaging 'jar'
                         // optionally artifactId can be defined here
-                        description 'Java JUnit runner for parameterized tests where the test cases are defined in a table-like manner.'
+                        description 'Java library dealing with date and time values without creating objects to be suitable for zero garbage applications.'
                         url 'http://time.tools4j.org'
 
                         scm {

@@ -1,7 +1,7 @@
-/**
+/*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2018 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 /**
  * Constants for common date formats of fixed length. The format defines the ordering
  * of the date components and the position of the separator characters (if any), but not
- * the type of separator charactor.
+ * the type of separator character.
  */
 public enum DateFormat {
     /** Big-endian date format without separator chars such as 20170328 */
@@ -103,10 +103,10 @@ public enum DateFormat {
         return hasSeparators() ? 10 : 8;
     }
 
-    private static DateFormat[] VALUES = values();
+    private static final DateFormat[] VALUES = values();
 
     /** @return the number of date formats available */
-    public static final int count() {
+    public static int count() {
         return VALUES.length;
     }
 
@@ -116,7 +116,7 @@ public enum DateFormat {
      * @throws ArrayIndexOutOfBoundsException if ordinal is out of bounds
      * @see #count()
      */
-    public static final DateFormat valueByOrdinal(final int ordinal) {
+    public static DateFormat valueByOrdinal(final int ordinal) {
         return VALUES[ordinal];
     }
 
@@ -124,7 +124,7 @@ public enum DateFormat {
      * Invokes the specified consumer for each of the constants.
      * @param consumer the consumer to invoke for every constant
      */
-    public static final void forEach(final Consumer<? super DateFormat> consumer) {
+    public static void forEach(final Consumer<? super DateFormat> consumer) {
         for (final DateFormat packing : VALUES) {
             consumer.accept(packing);
         }

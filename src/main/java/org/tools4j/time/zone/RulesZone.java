@@ -1,7 +1,7 @@
-/**
+/*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2018 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -89,8 +89,8 @@ final class RulesZone implements Zone {
             }
             final ZoneOffsetTransition[] transitions = transitionsForYear(year);
             ZoneOffsetTransition trans = null;
-            for (int i = 0; i < transitions.length; i++) {
-                trans = transitions[i];
+            for (final ZoneOffsetTransition transition : transitions) {
+                trans = transition;
                 if (secondsSinceEpoch < trans.toEpochSecond()) {
                     return trans.getOffsetBefore().getTotalSeconds();
                 }
@@ -143,9 +143,9 @@ final class RulesZone implements Zone {
     /**
      * @see ZoneRules#getStandardOffset(Instant) and last bit of {@link ZoneRules#getOffset(Instant)}.
      */
-    private static final int offsetSeconds(final long secondsSinceEpoch,
-                                           final long[] secondsSinceEpochArray,
-                                           final ZoneOffset[] offsetArray) {
+    private static int offsetSeconds(final long secondsSinceEpoch,
+                                     final long[] secondsSinceEpochArray,
+                                     final ZoneOffset[] offsetArray) {
         int index = Arrays.binarySearch(secondsSinceEpochArray, secondsSinceEpoch);
         if (index < 0) {
             // switch negative insert position to start of matched range

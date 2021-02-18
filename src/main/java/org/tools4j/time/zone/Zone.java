@@ -1,7 +1,7 @@
-/**
+/*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2018 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -58,9 +58,9 @@ public interface Zone {
     }
 
     final class Instances {
-        private static Zone UTC = new OffsetZone(ZoneOffset.UTC);
-        private static Zone SYSTEM_DEFAULT = create(ZoneId.systemDefault());
-        private static Zone NEW_YORK = Instances.create("America/New_York");
+        private static final Zone UTC = new OffsetZone(ZoneOffset.UTC);
+        private static final Zone SYSTEM_DEFAULT = create(ZoneId.systemDefault());
+        private static final Zone NEW_YORK = Instances.create("America/New_York");
 
         private static final Map<String, Zone> CACHE = new ConcurrentHashMap<>();
 
@@ -84,5 +84,5 @@ public interface Zone {
             CACHE.put(SYSTEM_DEFAULT.zoneId().getId(), SYSTEM_DEFAULT);
             CACHE.put(NEW_YORK.zoneId().getId(), NEW_YORK);
         }
-    };
+    }
 }

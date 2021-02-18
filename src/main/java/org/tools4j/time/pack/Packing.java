@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2018 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,24 +36,24 @@ public enum Packing {
      */
     BINARY,
     /**
-     * The packing is performed by multiplying the components with powers of ten and then adding those multiples.
+     * The packing is performed by multiplying the components by powers of ten and then adding those multiples.
      * <p>
      * This packing method is less efficient than {@link #BINARY} but is usually human readable, for instance packing
-     * th date 30st April 1979 as 19790430.
+     * the 30st April 1979 into an integer 19790430.
      */
     DECIMAL;
 
-    private static Packing[] VALUES = values();
+    private static final Packing[] VALUES = values();
 
-    public static final int count() {
+    public static int count() {
         return VALUES.length;
     }
 
-    public static final Packing valueByOrdinal(final int ordinal) {
+    public static Packing valueByOrdinal(final int ordinal) {
         return VALUES[ordinal];
     }
 
-    public static final void forEach(final Consumer<? super Packing> consumer) {
+    public static void forEach(final Consumer<? super Packing> consumer) {
         for (final Packing packing : VALUES) {
             consumer.accept(packing);
         }

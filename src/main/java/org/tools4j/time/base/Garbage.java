@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2018 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,16 @@
  */
 package org.tools4j.time.base;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
+/**
+ * Annotation for methods or types that may create garbage, always or under certain circumstances.
+ * Garbage in this context means allocation of objects that may later become unused and hence garbage.
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
@@ -33,7 +41,7 @@ public @interface Garbage {
     Type value();
     /** @return if true then garbage is rare, for instance when buffers are doubled everytime they become to small */
     boolean rare() default false;
-    /** @return if true then garbage is rare, for instance when buffers are doubled everytime they become to small */
+    /** @return description of the type of garbage and the situation in which it may occur */
     String text() default "";
 
     enum Type {
