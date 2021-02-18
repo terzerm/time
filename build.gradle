@@ -54,6 +54,9 @@ license {
         }
     }
 	ext.year = Calendar.getInstance().get(Calendar.YEAR)
+    mapping {
+        java='SLASHSTAR_STYLE'
+    }
 }
 
 compileJava.dependsOn licenseFormat
